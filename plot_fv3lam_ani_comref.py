@@ -1,11 +1,12 @@
 ###################################################################### CHJ #####
 ## Name		: plot_fv3lam_ani_comref.py
 ## Language	: Python 3.7
-## Usage	: Compare reflectivity by fv3 and mrms radar
+## Usage	: Create animation of hourly comparison of reflectivity by fv3 and mrms radar
 ## Input files  : BGDAWPXX.tmXX(*.prs.grib2) and QCComposite.XXX.grib2
 ## NOAA/NWS/NCEP/EMC
 ## History ===============================
 ## V000: 2020/08/03: Chan-Hoo Jeon : Preliminary version
+## V001: 2020/08/05: Chan-Hoo Jeon : Fix the issue of colorbar duplication
 ###################################################################### CHJ #####
 
 import os, sys
@@ -167,11 +168,17 @@ def read_data():
 # Plot comparison ========================================== CHJ =====
 def plot_comp():
 # ========================================================== CHJ =====
-    global fig,spec_fig,ax1,ax2,lb_fnt
+    global fig,spec_fig,ax1,ax2,lb_fnt,cs_cmap,cs_norm,cs_min,cs_max
 
     ani_fps=1
-
     lb_fnt=3
+
+    cs_cmap,cs_norm=new_cmap()
+    nm_svar='Reflectivity (dBZ)'
+    lb_ext='max'
+    cs_min=5
+    cs_max=None
+
     c_lon=np.mean(extent[:2])
     c_lat=np.mean(extent[2:])
 
@@ -182,6 +189,10 @@ def plot_comp():
     fig.suptitle(out_title_super,fontsize=lb_fnt+2)
     ax1=fig.add_subplot(spec_fig[0,0],projection=ccrs.PlateCarree(c_lon))
     ax2=fig.add_subplot(spec_fig[1,0],projection=ccrs.PlateCarree(c_lon))
+
+    cbar_plot(fig,ax1,nm_svar,lb_ext,lb_fnt)
+    cbar_plot(fig,ax2,nm_svar,lb_ext,lb_fnt)
+
 
     print(' Animation working ...')
     anim=animation.FuncAnimation(fig,animate,init_func=init,frames=icmax,interval=1/ani_fps,blit=False)
@@ -194,17 +205,6 @@ def plot_comp():
 # Animation ================================================ CHJ =====
 def animate(ic):
 # ========================================================== CHJ =====
-    tick_ln=1.5
-    tick_wd=0.45
-    tlb_sz=3
-    n_rnd=2
-
-    cs_cmap,cs_norm=new_cmap()
-    nm_svar='Reflectivity (dBZ)'
-    lb_ext='max'
-    cs_min=5
-    cs_max=None
-
     shr=plot_hrs[ic]
     out_title_super='Composite Reflectivity::'+domain+'('+res+')::'+s_date+'/'+shr
     fig.suptitle(out_title_super,fontsize=lb_fnt+2)
@@ -218,7 +218,6 @@ def animate(ic):
     cs1.cmap.set_under('white',alpha=0.)
     cs1.cmap.set_over('black')
     gridline_plot(ax1,lb_fnt)
-    cbar_plot(fig,ax1,cs1,nm_svar,lb_ext,lb_fnt)
 
     # subplot 2: radar data
     ax2.clear()
@@ -230,8 +229,6 @@ def animate(ic):
     cs2.cmap.set_under('white',alpha=0.)
     cs2.cmap.set_over('black')
     gridline_plot(ax2,lb_fnt)
-    cbar_plot(fig,ax2,cs2,nm_svar,lb_ext,lb_fnt)
-
 
 
 # Initialization for animation ============================= CHJ =====
@@ -305,12 +302,12 @@ def gridline_plot(ax,lb_sz):
 
 
 # color bar plot ========================================== CHJ =====
-def cbar_plot(fig,ax,cs,nm_svar,lb_ext,lb_sz):
+def cbar_plot(fig,ax,nm_svar,lb_ext,lb_sz):
 # ========================================================== CHJ =====
     divider=make_axes_locatable(ax)
     ax_cb=divider.new_horizontal(size="3%",pad=0.1,axes_class=plt.Axes)
     fig.add_axes(ax_cb)
-    cbar=plt.colorbar(cs,cax=ax_cb,extend=lb_ext)
+    cbar=matplotlib.colorbar.ColorbarBase(ax_cb,cmap=cs_cmap,norm=cs_norm,orientation='vertical',extend=lb_ext)
     cbar.ax.tick_params(labelsize=lb_sz)
     cbar.set_label(nm_svar,fontsize=lb_sz)
 
