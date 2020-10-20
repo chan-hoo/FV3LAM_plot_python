@@ -1,12 +1,13 @@
 ###################################################################### CHJ #####
-## Name		: plot_fv3lam_phyf.py
+## Name		: plot_fv3lam_comp2f.py
 ## Language	: Python 3.7
-## Usage	: Plot an output, phy, for fv3 regional modeling
+## Usage	: Compare two NetCDF or GRIB2 files for fv3 regional modeling
 ## Input files  : NetCDF(.nc) or GIRB2(.grib2) files
 ## NOAA/NWS/NCEP/EMC
 ## History ===============================
 ## V000: 2020/05/07: Chan-Hoo Jeon : Preliminary version
 ## V001: 2020/06/22: Chan-Hoo Jeon : Add opt. for machine-specific arguments
+## V002: 2020/10/20: Chan-Hoo Jeon : Add opt. for orography
 ###################################################################### CHJ #####
 
 import os, sys
@@ -43,11 +44,11 @@ plt.switch_backend('agg')
 # INPUT
 # ******
 # Path to the directories where the input files are located.
-dnm_in1="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/run_C96/BLEND00/"
-dnm_in2="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/run_C96/BLEND10/"
+dnm_in1="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/run_C96/INPUT/"
+dnm_in2="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/run_C96/INPUT/"
 
 # Input file name
-fnm_in1='phyf001.nc'
+fnm_in1='oro_data.nc'
 #fnm_in1='fv3sar.tz.conus.natprs.f01.grib2'
 fnm_in2=fnm_in1
 
@@ -69,10 +70,7 @@ elif gtype=='GFDL':
 print(fnm_in1[-5:])
 
 # Variables
-#vars_phy=["ugrd10m"]   #netcdf
-vars_phy=["tmp2m"]
-#vars_phy=["10 meter U wind component"]   #grib2
-#vars_phy=["2 meter temperature"]
+vars_comp=["orog_raw"]
 
 if fnm_in1[-2:]=='nc':
     ftype=1
@@ -91,7 +89,7 @@ else:
     sys.exit('ERROR: wrong data type !!!')
 
 # Label for comp. 
-cmp_lbl="blend00-blend10"
+cmp_lbl="Diff of orog_raw"
 
 # *******
 # OUTPUT
@@ -150,7 +148,7 @@ def main():
         except: raise Exception('Could NOT find the file',fname)
 
     # Variables
-    for svar in vars_phy:
+    for svar in vars_comp:
         comp_plot(svar)
 
 
@@ -163,23 +161,39 @@ def comp_plot(svar):
     if ftype==1:
         print(' ===== '+svar+' ===== File 1  ===============================')
         sfld1=np.ma.masked_invalid(compf1[svar].data)
-        (nts1,nys1,nxs1)=sfld1.shape
-        print(' File 1: time+2D: nts=',nts1,' nys=',nys1,' nxs=',nxs1)
-        sfld2d1=np.squeeze(sfld1,axis=0)
-        lon=np.ma.masked_invalid(compf1["lon"].data)
-        lat=np.ma.masked_invalid(compf1["lat"].data)
+        if sfld1.ndim==2:
+            (nys1,nxs1)=sfld1.shape
+            print(' File 1: 2D: nys=',nys1,' nxs=',nxs1)
+            sfld2d1=sfld1
+        elif sfld1.ndim==3:
+            (nts1,nys1,nxs1)=sfld1.shape
+            print(' File 1: time+2D: nts=',nts1,' nys=',nys1,' nxs=',nxs1)
+            sfld2d1=np.squeeze(sfld1,axis=0)
 
+        print(fnm_in1[0:3])
+        if fnm_in1[0:3]=='oro':
+            lon=np.ma.masked_invalid(compf1["geolon"].data)
+            lat=np.ma.masked_invalid(compf1["geolat"].data)
+        else:
+            lon=np.ma.masked_invalid(compf1["lon"].data)
+            lat=np.ma.masked_invalid(compf1["lat"].data)
+ 
         print(' ===== '+svar+' ===== File 2  ===============================')
         sfld2=np.ma.masked_invalid(compf2[svar].data)
-        (nts2,nys2,nxs2)=sfld2.shape
-        print(' File 2: time+2D: nts=',nts2,' nys=',nys2,' nxs=',nxs2)
-        sfld2d2=np.squeeze(sfld2,axis=0)
+        if sfld2.ndim==2:
+            (nys2,nxs2)=sfld2.shape
+            print(' File 2: 2D: nys=',nys2,' nxs=',nxs2)
+            sfld2d2=sfld2
+        elif sfld2.ndim==3:
+            (nts2,nys2,nxs2)=sfld2.shape
+            print(' File 2: time+2D: nts=',nts2,' nys=',nys2,' nxs=',nxs2)
+            sfld2d2=np.squeeze(sfld2,axis=0)
 
         if nys1!=nys2 or nxs1!=nxs2:
             sys.exit('ERROR: array size mismatched!!!')
 
         out_title_fld=out_title_base+svar
-        out_dyn_fname=out_fname_base+svar
+        out_comp_fname=out_fname_base+svar
 
     elif ftype==2:
         print(' ===== '+svar+' ===== File 1  ===============================')
@@ -193,7 +207,7 @@ def comp_plot(svar):
         sfld2d2=grbv.values
 
         out_title_fld=out_title_base+svar
-        out_dyn_fname=out_fname_base+stnm
+        out_comp_fname=out_fname_base+stnm
 
     # Highest and lowest longitudes and latitudes for plot extent
     lon_min=np.min(lon)
@@ -269,7 +283,7 @@ def comp_plot(svar):
 
     # Output figure
     ndpi=300
-    out_file(out_dyn_fname,ndpi)
+    out_file(out_comp_fname,ndpi)
 
   
 
