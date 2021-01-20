@@ -8,6 +8,7 @@
 ## V000: 2020/05/07: Chan-Hoo Jeon : Preliminary version
 ## V001: 2020/06/22: Chan-Hoo Jeon : Add opt. for machine-specific arguments
 ## V002: 2020/10/20: Chan-Hoo Jeon : Add opt. for orography
+## V003: 2021/01/20: Chan-Hoo Jeon : Modify opt. for gfs_data
 ###################################################################### CHJ #####
 
 import os, sys
@@ -44,13 +45,12 @@ plt.switch_backend('agg')
 # INPUT
 # ******
 # Path to the directories where the input files are located.
-dnm_in1="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/run_C96/INPUT/"
-dnm_in2="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/run_C96/INPUT/"
+dnm_in1="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/test_srw/expt_dirs/debug_6h/2021011900/INPUT/"
+dnm_in2="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/test_srw/expt_dirs/debug_6h9h/2021011906/INPUT/"
 
 # Input file name
-fnm_in1='oro_data.nc'
-#fnm_in1='fv3sar.tz.conus.natprs.f01.grib2'
-fnm_in2=fnm_in1
+fnm_in1='gfs_data.nc'
+fnm_in2='gfs_data.nc'
 
 # Domain name:
 domain='CONUS'
@@ -70,7 +70,8 @@ elif gtype=='GFDL':
 print(fnm_in1[-5:])
 
 # Variables
-vars_comp=["orog_raw"]
+vars_comp=["ps"]
+
 
 if fnm_in1[-2:]=='nc':
     ftype=1
@@ -89,7 +90,7 @@ else:
     sys.exit('ERROR: wrong data type !!!')
 
 # Label for comp. 
-cmp_lbl="Diff of orog_raw"
+cmp_lbl="Diff of ps"
 
 # *******
 # OUTPUT
@@ -170,8 +171,8 @@ def comp_plot(svar):
             print(' File 1: time+2D: nts=',nts1,' nys=',nys1,' nxs=',nxs1)
             sfld2d1=np.squeeze(sfld1,axis=0)
 
-        print(fnm_in1[0:3])
-        if fnm_in1[0:3]=='oro':
+        print(fnm_in1[0:8])
+        if fnm_in1[0:3]=='oro' or fnm_in1[0:8]=='gfs_data':
             lon=np.ma.masked_invalid(compf1["geolon"].data)
             lat=np.ma.masked_invalid(compf1["geolat"].data)
         else:
