@@ -35,21 +35,25 @@ machine='hera'
 
 print(' You are on', machine)
 
-# Path to Natural Earth Data-set for background plot
+#### Machine-specific input data ==================================== CHJ =====
+# cartopy.config: Natural Earth data for background
+# out_fig_dir: directory where the output files are created
+# mfdt_kwargs: mfdataset argument
+
 if machine=='hera':
     cartopy.config['data_dir']='/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/NaturalEarth'
+    out_fig_dir="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/fv3sar_pre_plot/Fig/"
+    mfdt_kwargs={'parallel':False}
 elif machine=='orion':
     cartopy.config['data_dir']='/home/chjeon/tools/NaturalEarth'
+    out_fig_dir="/work/noaa/fv3-cam/chjeon/tools/Fig/"
+    mfdt_kwargs={'parallel':False,'combine':'by_coords'}
 else:
-    sys.exit('ERROR: path to Natural Earth Data is not set !!!')
+    sys.exit('ERROR: Required input data are NOT set !!!')
 
 plt.switch_backend('agg')
 
-# Global variables ======================================== CHJ =====
-# ..... Case-dependent input :: should be changed case-by-case .....
-# ******
-# INPUT
-# ******
+# Case-dependent input =============================================== CHJ =====
 # Path to the directory where the grid file is located.
 dnm_data="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/expt_dirs/test_community/2020122700/INPUT/"
 
@@ -64,17 +68,6 @@ fnm_in_orog='oro_data.tile7.halo4.nc'
 
 # Grid point plot (every 'n_skip' rows/columns)
 n_skip=30
-
-# *******
-# OUTPUT
-# *******
-# Path to directory
-if machine=='hera':
-    out_fig_dir="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/fv3sar_pre_plot/Fig/"
-elif machine=='orion':
-    out_fig_dir="/work/noaa/fv3-cam/chjeon/tools/Fig/"
-else:
-    sys.exit('ERROR: path to output directory is not set !!!')
 
 # Bases of output title and file names
 # Grid
@@ -95,14 +88,6 @@ cmap_range_grd='round'
 
 # Resolution of background natural earth data ('10m' or '50m' or '110m')
 back_res='50m'
-
-# Machine-specific mfdataset arguments
-if machine=='hera':
-    mfdt_kwargs={'parallel':False}
-elif machine=='orion':
-    mfdt_kwargs={'parallel':False,'combine':'by_coords'}
-else:
-    mfdt_kwargs={'parallel':False}
 
 
 # Main part (will be called at the end) ============================== CHJ =====

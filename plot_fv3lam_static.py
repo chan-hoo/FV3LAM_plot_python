@@ -12,6 +12,7 @@
 ## V004: 2020/03/31: Chan-Hoo Jeon : Modify plot options for temperature
 ## V005: 2020/04/07: Chan-Hoo Jeon : Add refine ratio to output titles
 ## V006: 2020/06/22: Chan-Hoo Jeon : Add opt. for machine-specific arguments
+## V007: 2021/03/04: Chan-Hoo Jeon : Simplify the script
 ###################################################################### CHJ #####
 
 import os, sys
@@ -32,56 +33,42 @@ machine='hera'
 
 print(' You are on', machine)
 
-# Path to Natural Earth Data-set for background plot
+#### Machine-specific input data ==================================== CHJ =====
+# cartopy.config: Natural Earth data for background
+# prt_data: global surface climatology data
+# out_fig_dir: directory where the output files are created
+# mfdt_kwargs: mfdataset argument
+
 if machine=='hera':
     cartopy.config['data_dir']='/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/NaturalEarth'
+    prt_data="/scratch1/NCEPDEV/global/glopara/fix/fix_sfc_climo/"
+    out_fig_dir="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/fv3sar_pre_plot/Fig/"
+    mfdt_kwargs={'parallel':False}
 elif machine=='orion':
     cartopy.config['data_dir']='/home/chjeon/tools/NaturalEarth'
+    prt_data="/work/noaa/global/glopara/fix/fix_sfc_climo/"
+    out_fig_dir="/work/noaa/fv3-cam/chjeon/tools/Fig/"
+    mfdt_kwargs={'parallel':False,'combine':'by_coords'}
 else:
-    sys.exit('ERROR: path to Natural Earth Data is not set !!!')
+    sys.exit('ERROR: Required input Data are NOT set !!!')
 
 plt.switch_backend('agg')
 
-# Global variables ======================================== CHJ =====
-# ..... Case-dependent input :: should be changed case-by-case .....
-# ******
-# INPUT
-# ******
+# Case-dependent parameters  ========================================= CHJ =====
 # Path to the directory where the input NetCDF files are located.
-dnm_data="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/C96/fix_sfc/"
-#dnm_data="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/regional_workflow/fix/fix_sar/hi/"
-#dnm_data="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/brz_C768/fix_sfc/"
+dnm_data="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/expt_dirs/test_community/sfc_climo/"
 
 # Path to the orography file
-oro_path="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/C96/"
-#oro_path="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/brz_C768/"
-
-# Path to the original (global) data. Check the original files in static_plot()
-prt_data="/home/Chan-hoo.Jeon/fv3sar/UFS_UTILS/fix/fix_sfc_climo/"
+oro_path="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/expt_dirs/test_community/2020122700/INPUT/"
 
 # Basic form of Input NetCDF file names: res+static+basic form
-#fnm_in_base='.tile7.halo0.nc'  # for halo0
-#fnm_in_base='.tile7.nc'  # for workflow
 fnm_in_base='.tile7.halo4.nc' # for halo4
 
-# Domain name:
-domain='CONUS'
-
 # Grid resolution ('C96'/'C768'):
-res='C96'
-
-# Grid type ('ESG'/'GFDL')
-gtype='GFDL'
-
-# GFDL grid-refinement ratio (for ESG grid, refine=0)
-if gtype=='ESG':
-    refine=0
-elif gtype=='GFDL':
-    refine=3
+res='C403'
 
 # Orography data file (w/ halo0 or halo4) for coordinates
-# fnm_in_oro=res+'_oro_data.tile7.halo0.nc' # for halo0
-fnm_in_orog=res+'_oro_data.tile7.halo4.nc'  # for halo4
+fnm_in_orog='oro_data.tile7.halo4.nc'  # for halo4
 
 # Static fields
 # comment out below in case of no time-limit
@@ -95,41 +82,16 @@ fnm_in_orog=res+'_oro_data.tile7.halo4.nc'  # for halo4
 # for snowfree_albedo, split vars_subs in the funtion of static_plot into two.
 #vars_static=["snowfree_albedo"]
 
-#vars_static=["maximum_snow_albedo","substrate_temperature","vegetation_type"]
-vars_static=["vegetation_greenness"]
-
-# *******
-# OUTPUT
-# *******
-# Path to directory
-if machine=='hera':
-    out_fig_dir="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/fv3sar_pre_plot/Fig/"
-elif machine=='orion':
-    out_fig_dir="/work/noaa/fv3-cam/chjeon/tools/Fig/"
-else:
-    sys.exit('ERROR: path to output directory is not set !!!')
+vars_static=["substrate_temperature","vegetation_greenness"]
 
 # basic forms of title and file name: base+static field name
-if gtype=='ESG':
-    out_title_base='Static::'+domain+'(ESG)::'+res
-    out_fname_base='fv3_static_'+domain+'_esg_'+res+'_'
-elif gtype=='GFDL':
-    out_title_base='Static::'+domain+'(GFDL)::'+res+'(x'+str(refine)+')::'
-    out_fname_base='fv3_static_'+domain+'_gfdl_'+res+'_'
+out_title_base='FV3LAM::Static (FIX)::'
+out_fname_base='fv3lam_static_'
 
-out_title_base_g='FV3::Original::'
+out_title_base_g='FV3LAM::FIX::Original::'
 
 # Resolution of background natural earth data ('50m' or '110m')
 back_res='50m'
-
-# Machine-specific mfdataset arguments
-if machine=='hera':
-    mfdt_kwargs={'parallel':False}
-elif machine=='orion':
-    mfdt_kwargs={'parallel':False,'combine':'by_coords'}
-else:
-    mfdt_kwargs={'parallel':False}
-
 
 
 # Main part (will be called at the end) =================== CHJ =====
