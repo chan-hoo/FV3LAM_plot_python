@@ -79,10 +79,10 @@ else:
 # Bases of output title and file names
 # Grid
 out_grd_title='FV3LAM::grid'
-out_grd_fname='fv3lam_grid_conus_esg'
+out_grd_fname='fv3lam_grid'
 # Orography
 out_orog_title_base='FV3LAM::orography::'
-out_orog_fname_base='fv3lam_orog_conus_esg'
+out_orog_fname_base='fv3lam_orog'
 
 # orography variables:
 #orog_vars=["slmsk","land_frac","orog_raw","orog_filt","stddev","convexity",
@@ -168,7 +168,7 @@ def orog_var_plot(oro_f,ovar):
 
     # Orography: output title and file name
     out_orog_title=out_orog_title_base+ovar
-    out_orog_fname=out_orog_fname_base+ovar
+    out_orog_fname=out_orog_fname_base+"_"+ovar
 
 
     print(' ===== '+ovar+' ===== orography =======================')
