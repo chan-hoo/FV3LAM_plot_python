@@ -7,6 +7,7 @@
 ## History ===============================
 ## V000: 2020/03/18: Chan-Hoo Jeon : Preliminary version
 ## V001: 2020/06/22: Chan-Hoo Jeon : Add opt. for machine-specific arguments
+## V002: 2021/03/04: Chan-Hoo Jeon : Simplify the sript
 ###################################################################### CHJ #####
 
 import os, sys
@@ -28,43 +29,33 @@ machine='hera'
 
 print(' You are on', machine)
 
-# Path to Natural Earth Data-set for background plot
+#### Machine-specific input data ==================================== CHJ =====
+# cartopy.config: Natural Earth data for background
+# out_fig_dir: directory where the output files are created
+# mfdt_kwargs: mfdataset argument
+
 if machine=='hera':
     cartopy.config['data_dir']='/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/NaturalEarth'
+    out_fig_dir="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/fv3sar_pre_plot/Fig/"
 elif machine=='orion':
     cartopy.config['data_dir']='/home/chjeon/tools/NaturalEarth'
+    out_fig_dir="/work/noaa/fv3-cam/chjeon/tools/Fig/"
 else:
-    sys.exit('ERROR: path to Natural Earth Data is not set !!!')
+    sys.exit('ERROR: Required input data are NOT set !!!')
 
 plt.switch_backend('agg')
 
-# Global variables ======================================== CHJ =====
-# ..... Case-dependent input :: should be changed case-by-case .....
-# ******
-# INPUT
-# ******
+# Case-dependent input =============================================== CHJ =====
 # Path to the directory where the input NetCDF files are located.
-dnm_data="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/run_C96/"
-#dnm_data="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/regional_workflow/fix/fix_am/"
+dnm_data="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/expt_dirs/test_community/fix_am/"
 
 # Static atmospheric fields
 #vars_fixam=["glacier","maxice","snoclim","soilmgldas","seaice","RTGSST"]
 vars_fixam=["RTGSST"]
 
-# *******
-# OUTPUT
-# *******
-# Path to directory
-if machine=='hera':
-    out_fig_dir="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/fv3sar_pre_plot/Fig/"
-elif machine=='orion':
-    out_fig_dir="/work/noaa/fv3-cam/chjeon/tools/Fig/"
-else:
-    sys.exit('ERROR: path to output directory is not set !!!')
-
 # basic forms of title and file name: base+static field name
-out_title_base='FIX_AM::'
-out_fname_base='fv3_fixam_'
+out_title_base='FV3LAM::FIX_AM::'
+out_fname_base='fv3lam_fixam_'
 
 # Resolution of background natural earth data ('50m' or '110m')
 back_res='110m'
