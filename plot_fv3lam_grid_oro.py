@@ -54,7 +54,7 @@ plt.switch_backend('agg')
 dnm_data="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/expt_dirs/test_community/2020122700/INPUT/"
 
 # path to the orography file
-dnm_orog="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/expt_dirs/test_community/2020122700/INPUT/"
+dnm_orog=dnm_data
 
 # Grid file
 fnm_in_grid='grid.tile7.halo4.nc'
