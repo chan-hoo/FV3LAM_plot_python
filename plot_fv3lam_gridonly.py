@@ -1,11 +1,12 @@
 ###################################################################### CHJ #####
-## Name		: plot_fv3lam_grid.py
+## Name		: plot_fv3lam_gridonly.py
 ## Language	: Python 3.7
 ## Usage	: Plot regional FV3 super-grid on the map
-## Input files  : CXX_grid.tile7.haloX.nc
+## Input files  : grid.tile7.haloX.nc
 ## NOAA/NWS/NCEP/EMC
 ## History ===============================
 ## V000: 2020/07/20: Chan-Hoo Jeon : Preliminary version
+## V001: 2021/03/04: Chan-Hoo Jeon : Simplify the script
 ###################################################################### CHJ #####
 
 import os, sys
@@ -42,30 +43,10 @@ plt.switch_backend('agg')
 # INPUT
 # ******
 # Path to the directory where the grid file is located.
-dnm_data="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/TMP/"
-#dnm_data="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/expt_dirs/jch_ecoast_esg/grid/"
-
-# Domain name:
-domain='AQ'
-
-# Grid resolution ('C{res}')
-res='C3343'
-
-# Grid type ('ESG'/'GFDL')
-gtype='ESG'
-
-# GFDL grid-refinement ratio (for ESG grid, refine=0)
-if gtype=='ESG':
-    refine=0
-elif gtype=='GFDL':
-    refine=3
-
-# Basic form of input NetCDF file names
-fnm_in_base='.tile7.halo4.nc'     # halo4
-#fnm_in_base='.tile7.halo0.nc'     # halo0
+dnm_data="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/expt_dirs/test_community/2020122700/INPUT/"
 
 # Grid file
-fnm_in_grid=res+'_grid'+fnm_in_base
+fnm_in_grid='grid.tile7.halo4.nc'
 
 # *******
 # OUTPUT
@@ -79,12 +60,11 @@ else:
     sys.exit('ERROR: path to output directory is not set !!!')
 
 # output title and file names
-if gtype=='ESG':
-    out_grd_title='Grid(ESG)::'+domain+'::'+res
-    out_grd_fname='fv3_grid_only_'+domain+'_esg_'+res
-elif gtype=='GFDL':
-    out_grd_title='Grid(GFDL)::'+domain+'::'+res+'(x'+str(refine)+')'
-    out_grd_fname='fv3_grid_only'+domain+'_gfdl_'+res
+out_grd_title='FV3LAM::grid'
+out_grd_fname='fv3lam_grid_only'
+
+# Colormap range option flag ('symmetry','roudn','real','fixed')
+cmap_range_grd='round'
 
 # Resolution of background natural earth data ('10m' or '50m' or '110m')
 back_res='50m'
@@ -175,7 +155,7 @@ def grid_dxy_plot(grd_area,lon_min,lat_min):
     print(' oro:lat-max(lat2)=',lat_max)
 
     print(' ***** npx/npy in input.nml/fv_core_nml *****')
-    hcond=fnm_in_base[-8:-3]
+    hcond=fnm_in_grid[-8:-3]
     if hcond=='halo0':
         print(' npx=',npx+1)
         print(' npy=',npy+1)
@@ -203,23 +183,23 @@ def grid_dxy_plot(grd_area,lon_min,lat_min):
     print(' flx_avg=',favg)
 
     # Set the colormap range
-    cmap_range='round'
+#    cmap_range_grd='round'
     n_rnd=2
-    print(' cmap range=',cmap_range)
-    if cmap_range=='symmetry':
+    print(' cmap range=',cmap_range_grd)
+    if cmap_range_grd=='symmetry':
         tmp_cmp=max(abs(fmax),abs(fmin))
         cs_min=round(-tmp_cmp,n_rnd)
         cs_max=round(tmp_cmp,n_rnd)
         cs_avg=round(favg,n_rnd)
-    elif cmap_range=='round':
+    elif cmap_range_grd=='round':
         cs_min=round(fmin,n_rnd)
         cs_max=round(fmax,n_rnd)
         cs_avg=round(favg,n_rnd)
-    elif cmap_range=='real':
+    elif cmap_range_grd=='real':
         cs_min=fmin
         cs_max=fmax
         cs_avg=favg
-    elif cmap_range=='fixed':
+    elif cmap_range_grd=='fixed':
         cs_min=2.7
         cs_max=3.2
         cs_avg=round(favg,n_rnd)

@@ -90,6 +90,9 @@ out_orog_fname_base='fv3lam_orog'
 #           "theta","gamma","sigma","elvmax"]
 orog_vars=["orog_filt"]
 
+# Color-map range option flag ('symmetry','round','real','fixed')
+cmap_range_grd='round'
+
 # Resolution of background natural earth data ('10m' or '50m' or '110m')
 back_res='50m'
 
@@ -371,23 +374,23 @@ def grid_dxy_plot(grd_area,lon_min,lat_min):
     print(' flx_avg=',favg)
 
     # Set the colormap range
-    cmap_range='fixed'
+#    cmap_range_grd='round'
     n_rnd=2
-    print(' cmap range=',cmap_range)
-    if cmap_range=='symmetry':
+    print(' cmap range=',cmap_range_grd)
+    if cmap_range_grd=='symmetry':
         tmp_cmp=max(abs(fmax),abs(fmin))
         cs_min=round(-tmp_cmp,n_rnd)
         cs_max=round(tmp_cmp,n_rnd)
         cs_avg=round(favg,n_rnd)
-    elif cmap_range=='round':
+    elif cmap_range_grd=='round':
         cs_min=round(fmin,n_rnd)
         cs_max=round(fmax,n_rnd)
         cs_avg=round(favg,n_rnd)
-    elif cmap_range=='real':
+    elif cmap_range_grd=='real':
         cs_min=fmin
         cs_max=fmax
         cs_avg=favg
-    elif cmap_range=='fixed':
+    elif cmap_range_grd=='fixed':
         cs_min=2.7
         cs_max=3.2
         cs_avg=round(favg,n_rnd)
