@@ -12,6 +12,7 @@
 ## V004: 2020/04/21: Chan-Hoo Jeon : Print out max/min every time step
 ## V005: 2020/05/26: Chan-Hoo Jeon : Modified to include blending layers
 ## V006: 2020/06/22: Chan-Hoo Jeon : Add opt. for machine-specific arguments
+## V007: 2021/03/04: Chan-Hoo Jeon : Simplify the script
 ###################################################################### CHJ #####
 
 import os, sys
@@ -24,70 +25,49 @@ import numpy as np
 import xarray as xr
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-plt.switch_backend('agg')
+# HPC machine ('hera','orion')
+machine='hera'
 
-# Global variables =================================================== CHJ =====
-# ..... Case-dependent input :: should be changed case-by-case .....
-# ******
-# INPUT
-# ******
+print(' You are on', machine)
+
+#### Machine-specific input data ==================================== CHJ =====
+# out_fig_dir: directory where the output files are created
+# mfdt_kwargs: mfdataset argument
+
+if machine=='hera':
+    out_fig_dir="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/fv3sar_pre_plot/Fig/"
+    mfdt_kwargs={'parallel':False}
+elif machine=='orion':
+    out_fig_dir="/work/noaa/fv3-cam/chjeon/tools/Fig/"
+    mfdt_kwargs={'parallel':False,'combine':'by_coords'}
+else:
+    sys.exit('ERROR: Required input data are NOT set !!!')
+
+
+# Case-dependent input =============================================== CHJ =====
 # Path to the directory where the input NetCDF files are located.
 dnm_data="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/run_C96/INPUT_blend10/"
-#dnm_data="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/regional_workflow/fix/fix_sar/pr/"
-#dnm_data="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/TB_work/work_FV3_regional_C96_2019101500_blend/INPUT_blend10/"
 
 # File names of initial and boundary conditions 
 fnm_in_bndr_base='gfs_bndy.tile7.'
-#bndr_step=["000","003","006","009","012"]   # time steps of input netcdf files (3 digits)
+
+# Time steps of input netcdf files (3 digits): ex ["000","003","006","009","012"] 
 bndr_step=["000"]
 
 # Variables 
 #vars_bc=["ps","w","zh","t","sphum","liq_wat","o3mr","ice_wat",
 #         "rainwat","snowwat","graupel","u_w","v_w","u_s","v_s"]
-#vars_bc=["sphum","liq_wat","o3mr","ice_wat"]
-#vars_bc=["rainwat","snowwat","graupel"]
-#vars_bc=["u_s","v_s","u_w","v_w"]
 vars_bc=["t","u_s"]
 
 # number of the target vertical level (only for 3-D fields)
 ilvl=1
 
-# Domain name:
-domain='CONUS'
-
-# Grid resolution:
-res='C96'
-
-# Grid type ('ESG'/'GFDL')
-gtype='GFDL'
-
-# GFDL grid-refinement ratio (for ESG grid, refine=0)
-if gtype=='ESG':
-    refine=0
-elif gtype=='GFDL':
-    refine=3
-
-# HPC machine ('hera','orion')
-machine='hera'
-
-# *******
-# OUTPUT
-# *******
-# Path to directory
-if machine=='hera':
-    out_fig_dir="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/fv3sar_pre_plot/Fig/"
-elif machine=='orion':
-    out_fig_dir="/work/noaa/fv3-cam/chjeon/tools/Fig/"
-else:
-    sys.exit('ERROR: path to output directory is not set !!!')
+# Color-map range option flag ('symmetry','round','real','fixed')
+cmap_range='round'
 
 # basic forms of title and file name
-if gtype=='ESG':
-    out_title_base='IC/LBC::'+domain+'(ESG)::'+res
-    out_fname_base='fv3_icbc_'+domain+'_esg_'+res+'_'
-elif gtype=='GFDL':
-    out_title_base='IC/LBC::'+domain+'(GFDL)::'+res+'(x'+str(refine)+')'
-    out_fname_base='fv3_icbc_'+domain+'_gfdl_'+res+'_'
+out_title_base='FV3LAM::IC/LBC'
+out_fname_base='fv3lam_icbc_'
 
 # Number of additional boundary arrays (halo)
 n_halo=4
@@ -100,14 +80,6 @@ n_halo_all=n_halo+n_blend
 
 bc_lvl=format(ilvl,'03d')
 sblend=format(n_blend,'02d') 
-
-# Machine-specific mfdataset arguments
-if machine=='hera':
-    mfdt_kwargs={'parallel':False}
-elif machine=='orion':
-    mfdt_kwargs={'parallel':False,'combine':'by_coords'}
-else:
-    mfdt_kwargs={'parallel':False}
 
 
 # Main part (will be called at the end) ============================== CHJ =====
@@ -466,7 +438,7 @@ def plot_gfs(tvar,svar):
     fmin=np.min(sgfs2d)
     fmax=np.max(sgfs2d)
 
-    cmap_range='round'
+#    cmap_range='round'
     n_rnd=2
 
     print(' cmap range=',cmap_range)
@@ -555,14 +527,12 @@ def axis_contract(ij_xy):
     itmp=np.absolute(ij_xy-imid)
 #    print(np.min(ij_xy),np.max(ij_xy),imid,itmp)
 
-    if domain=='CONUS' and res=='C96' and n_blend==10:
+    if n_blend==10:
         iexp=3
-    elif domain=='CONUS' and res=='C96' and n_blend==6:
+    elif n_blend==6:
         iexp=5
-    elif domain=='CONUS' and res=='C96' and n_blend==0:
+    elif n_blend==0:
         iexp=10
-    elif domain=='BRZ' and res=='C768':
-        iexp=16
     else:
         iexp=16
 
