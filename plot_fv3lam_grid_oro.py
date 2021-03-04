@@ -14,6 +14,7 @@
 ## V006: 2020/04/23: Chan-Hoo Jeon : Add grid-uniformness plot
 ## V007: 2020/06/22: Chan-Hoo Jeon : Add opt. for machine-specific arguments
 ## V008: 2020/06/29: Chan-Hoo Jeon : Modify grid_dxy_plot to use area for GFDL/ESG
+## V009: 2021/03/04: Chan-Hoo Jeon : Simplify the script
 ###################################################################### CHJ #####
 
 import os, sys
@@ -50,47 +51,19 @@ plt.switch_backend('agg')
 # INPUT
 # ******
 # Path to the directory where the grid file is located.
-dnm_data="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/expt_dirs/jch_ecoast_esg/grid/"
+dnm_data="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/expt_dirs/test_community/2020122700/INPUT/"
 
 # path to the orography file
-dnm_orog="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/expt_dirs/jch_ecoast_esg/orog/"
-
-# Domain name:
-domain='ECNA'
-
-# Grid resolution ('C{res}')
-res='C3342'
-
-# Grid type ('ESG'/'GFDL')
-gtype='ESG'
-
-# GFDL grid-refinement ratio (for ESG grid, refine=0)
-if gtype=='ESG':
-    refine=0
-elif gtype=='GFDL':
-    refine=3
-
-# Basic form of input NetCDF file names
-fnm_in_base='.tile7.halo4.nc'     # halo4
-#fnm_in_base='.tile7.halo0.nc'     # halo0
+dnm_orog="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/expt_dirs/test_community/2020122700/INPUT/"
 
 # Grid file
-fnm_in_grid=res+'_grid'+fnm_in_base
+fnm_in_grid='grid.tile7.halo4.nc'
 
 # Orography file
-fnm_in_orog=res+'_oro_data'+fnm_in_base
+fnm_in_orog='oro_data.tile7.halo4.nc'
 
 # Grid point plot (every 'n_skip' rows/columns)
-if domain=='CONUS' and res=='C96':
-    n_skip=10
-elif domain=='AK':
-    n_skip=50
-elif domain=='PR':
-    n_skip=20
-elif domain=='ECNA':
-    n_skip=50
-else:
-    n_skip=50
+n_skip=30
 
 # *******
 # OUTPUT
@@ -103,13 +76,13 @@ elif machine=='orion':
 else:
     sys.exit('ERROR: path to output directory is not set !!!')
 
-# output title and file names
-if gtype=='ESG':
-    out_grd_title='Grid(ESG)::'+domain+'::'+res
-    out_grd_fname='fv3_grid_'+domain+'_esg_'+res
-elif gtype=='GFDL':
-    out_grd_title='Grid(GFDL)::'+domain+'::'+res+'(x'+str(refine)+')'
-    out_grd_fname='fv3_grid_'+domain+'_gfdl_'+res
+# Bases of output title and file names
+# Grid
+out_grd_title='FV3LAM::grid'
+out_grd_fname='fv3lam_grid_conus_esg'
+# Orography
+out_orog_title_base='FV3LAM::orography::'
+out_orog_fname_base='fv3lam_orog_conus_esg'
 
 # orography variables:
 #orog_vars=["slmsk","land_frac","orog_raw","orog_filt","stddev","convexity",
@@ -167,7 +140,7 @@ def orog_plot():
     print(' oro:lat-max(lat2)=',lat_max)
 
     print(' ***** npx/npy in input.nml/fv_core_nml *****')
-    hcond=fnm_in_base[-8:-3]
+    hcond=fnm_in_orog[-8:-3]
     npy,npx=oro_x.shape
     if hcond=='halo0':
         print(' npx=',npx+1)
@@ -193,15 +166,12 @@ def orog_plot():
 def orog_var_plot(oro_f,ovar):
 # ==================================================================== CHJ =====
 
+    # Orography: output title and file name
+    out_orog_title=out_orog_title_base+ovar
+    out_orog_fname=out_orog_fname_base+ovar
+
+
     print(' ===== '+ovar+' ===== orography =======================')
-
-    # Output title and file name
-    if refine==0:
-        out_orog_title='FV3::'+ovar+'::'+domain+'::'+res
-    else:
-        out_orog_title='FV3::'+ovar+'::'+domain+'::'+res+'(x'+str(refine)+')'
-
-    out_orog_fname='fv3_orog_'+domain+'_'+res+'_'+ovar
 
     # Max and Min of the field
     fmax=np.max(oro_f)
