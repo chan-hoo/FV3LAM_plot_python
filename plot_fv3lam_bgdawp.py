@@ -8,6 +8,7 @@
 ## V000: 2020/05/18: Chan-Hoo Jeon : Preliminary version
 ## V001: 2020/06/22: Chan-Hoo Jeon : Add opt. for machine-specific arguments
 ## V002: 2020/07/17: Chan-Hoo Jeon : Add new cmap and background image
+## V003: 2021/03/05: Chan-Hoo Jeon : Simplify the script
 ###################################################################### CHJ #####
 
 import os, sys
@@ -27,47 +28,33 @@ machine='hera'
 
 print(' You are on', machine)
 
-# Path to Natural Earth Data-set for background plot
-if machine=='hera':
-    path_NE='/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/NaturalEarth'
-elif machine=='orion':
-    path_NE='/home/chjeon/tools/NaturalEarth'
-else:
-    sys.exit('ERROR: path to Natural Earth Data is not set !!!')
+#### Machine-specific input data ==================================== CHJ =====
+# cartopy.config: Natural Earth data for background
+# out_fig_dir: directory where the output files are created
+# mfdt_kwargs: mfdataset argument
 
-cartopy.config['data_dir']=path_NE
-os.environ["CARTOPY_USER_BACKGROUNDS"]=path_NE+'/raster_files'
+if machine=='hera':
+    cartopy.config['data_dir']='/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/NaturalEarth'
+    out_fig_dir="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/fv3sar_pre_plot/Fig/"
+    mfdt_kwargs={'parallel':False}
+elif machine=='orion':
+    cartopy.config['data_dir']='/home/chjeon/tools/NaturalEarth'
+    out_fig_dir="/work/noaa/fv3-cam/chjeon/tools/Fig/"
+    mfdt_kwargs={'parallel':False,'combine':'by_coords'}
+else:
+    sys.exit('ERROR: Required input data are NOT set !!!')
 
 plt.switch_backend('agg')
 
-# Global variables ======================================== CHJ =====
-# ..... Case-dependent input :: should be changed case-by-case .....
-# ******
-# INPUT
-# ******
+# Case-dependent input =============================================== CHJ =====
 # Path to the directory where the input NetCDF files are located.
-dnm_data="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/expt_dirs/test_community_hrrr25/2020061800/postprd/"
+dnm_data="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/expt_dirs/test_community/2020122700/postprd/"
 
-# Domain name:
-domain='HRRR'
+# Input file hour number
+fnm_hr='f003'
 
 # Input file (BGDAWPXX.tmXX)
-#fnm_in='fv3sar.tz.conus.natprs.f01.grib2'
-#fnm_in='BGDAWP_2017000000600'
-fnm_in=domain+'.t00z.bgdawp06.tm00'
-
-# Grid resolution ('C96'/'C768'):
-res='C401'
-
-# Grid type ('ESG'/'GFDL')
-gtype='ESG'
-
-# GFDL grid-refinement ratio (for ESG grid, refine=0)
-if gtype=='ESG':
-    refine=0
-elif gtype=='GFDL':
-    refine=3
-
+fnm_in='rrfs.t00z.bgdawp'+fnm_hr+'.tm00.grib2'
 
 # Output fields
 ##### pressure levels: 
@@ -111,40 +98,26 @@ elif gtype=='GFDL':
 #vars_grb2=["10 meter V wind component"]
 #vars_grb2=["10 meter wind speed"]
 #vars_grb2=["Total cloud cover"]
-vars_grb2=["Total precipitation"]
+#vars_grb2=["Total precipitation"]
 #vars_grb2=["Storm surface runoff"]
 #vars_grb2=["Sea surface temperature"]
 #vars_grb2=["Composite radar reflectivity"]
+#vars_grb2=["Orography"]
 
-#vars_grb2=["Total precipitation","Composite radar reflectivity"]
+vars_grb2=["Total precipitation","Composite radar reflectivity"]
 
 # Layer number to be plotted
 ilvl=1
 
-
-# *******
-# OUTPUT
-# *******
-# Path to directory
-if machine=='hera':
-    out_fig_dir="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/fv3sar_pre_plot/Fig/"
-elif machine=='orion':
-    out_fig_dir="/work/noaa/fv3-cam/chjeon/tools/Fig/"
-else:
-    sys.exit('ERROR: path to output directory is not set !!!')
-
 # basic forms of title and file name
-if gtype=='ESG':
-    out_title_base='FV3-LAM::'+domain+'(ESG)::'+res+'::'
-    out_fname_base='fv3_out_prs_'+domain+'_esg_'+res+'_'
-elif gtype=='GFDL':
-    out_title_base='FV3-LAM::'+domain+'(GFDL)::'+res+'(x'+str(refine)+')'+'::'
-    out_fname_base='fv3_out_prs_'+domain+'_gfdl_'+res+'_'
+out_title_base='FV3LAM::BGDAWP::'+fnm_hr+'::'
+out_fname_base='fv3lam_out_bgdawp_'+fnm_hr+'_'
 
 # Resolution of background natural earth data ('10m' or '50m' or '110m')
 back_res='50m'
+
 # high-resolution background image ('on', 'off')
-back_img='on'
+back_img='off'
 
 
 
@@ -313,7 +286,7 @@ def plot_grb2(svar):
         grbv=grbs.select(name="Sea surface temperature",typeOfLevel="surface")[ilvlm]
     elif svar=="Total cloud cover":
         ilvlm=0
-        grbv=grbs.select(name="Total Cloud Cover")[ilvlm]
+        grbv=grbs.select(name="total cloud cover")[ilvlm]
         cs_cmap="cubehelix_r"
     elif svar=="Composite radar reflectivity":
         ilvlm=0
@@ -322,6 +295,11 @@ def plot_grb2(svar):
         nm_svar=svar+' (dBZ)'
         cmap_range='designed'
         lb_ext='max'
+    elif svar=="Orography":
+        ilvlm=0
+        grbv=grbs.select(name="Orography")[ilvlm]
+        cs_cmap="gist_ncar_r"
+        n_rnd=0
     else:
         sys.exit('ERROR: Wrong svar or Not set up yet !!! ::'+svar)
 
