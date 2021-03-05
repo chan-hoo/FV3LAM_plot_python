@@ -7,6 +7,7 @@
 ## History ===============================
 ## V000: 2020/05/07: Chan-Hoo Jeon : Preliminary version
 ## V001: 2020/06/22: Chan-Hoo Jeon : Add opt. for machine-specific arguments
+## V002: 2021/03/05: Chan-Hoo Jeon : Simplify the script
 ###################################################################### CHJ #####
 
 import os, sys
@@ -26,43 +27,32 @@ machine='hera'
 
 print(' You are on', machine)
 
-# Path to Natural Earth Data-set for background plot
+#### Machine-specific input data ==================================== CHJ =====
+# cartopy.config: Natural Earth data for background
+# out_fig_dir: directory where the output files are created
+# mfdt_kwargs: mfdataset argument
+
 if machine=='hera':
     cartopy.config['data_dir']='/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/NaturalEarth'
+    out_fig_dir="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/fv3sar_pre_plot/Fig/"
+    mfdt_kwargs={'parallel':False}
 elif machine=='orion':
     cartopy.config['data_dir']='/home/chjeon/tools/NaturalEarth'
+    out_fig_dir="/work/noaa/fv3-cam/chjeon/tools/Fig/"
+    mfdt_kwargs={'parallel':False,'combine':'by_coords'}
 else:
-    sys.exit('ERROR: path to Natural Earth Data is not set !!!')
+    sys.exit('ERROR: Required input data are NOT set !!!')
 
 plt.switch_backend('agg')
 
-# Global variables ======================================== CHJ =====
-# ..... Case-dependent input :: should be changed case-by-case .....
-# ******
-# INPUT
-# ******
+# Case-dependent input =============================================== CHJ =====
 # Path to the directory where the input NetCDF file is located.
-dnm_out="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/expt_dirs/test_community_hrrr25/2020061800/"
+dnm_out="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/expt_dirs/test_community/2020122700/"
 
 # grid file name
-fnm_hr='f006'
+fnm_hr='f003'
 
 fnm_input='phy'+fnm_hr+'.nc'
-
-# Domain name:
-domain='HRRR'
-
-# Grid resolution ('C96'/'C768'):
-res='C401'
-
-# Grid type ('ESG'/'GFDL')
-gtype='ESG'
-
-# GFDL grid-refinement ratio (for ESG grid, refine=0)
-if gtype=='ESG':
-    refine=0
-elif gtype=='GFDL':
-    refine=3
 
 # Variables
 #vars_phy=["acond","albdo_ave","alnsf","alnwf","alvsf","alvwf"]
@@ -88,39 +78,14 @@ elif gtype=='GFDL':
 #vars_phy=["uswrf_ave","uswrf_avetoa","v-gwd_ave","v10max","vbdsf_ave"]
 #vars_phy=["vddsf_ave","veg","vflx","vflx_ave","vgrd10m"]
 #vars_phy=["vgrd_hyblev1","vtype","watr_acc","weasd","wilt"]
-
-#vars_phy=["ugrd10m"]
-vars_phy=["tmp2m"]
-
-# *******
-# OUTPUT
-# *******
-# Path to directory
-if machine=='hera':
-    out_fig_dir="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/fv3sar_pre_plot/Fig/"
-elif machine=='orion':
-    out_fig_dir="/work/noaa/fv3-cam/chjeon/tools/Fig/"
-else:
-    sys.exit('ERROR: path to output directory is not set !!!')
+vars_phy=["tmpsfc"]
 
 # basic forms of title and file name
-if gtype=='ESG':
-    out_title_base='FV3::PHY::'+domain+'(ESG)::'+res+'::'
-    out_fname_base='fv3_out_phy_'+domain+'_esg_'+res+'_'
-elif gtype=='GFDL':
-    out_title_base='PHY::'+domain+'(GFDL)::'+res+'(x'+str(refine)+')'+'::'
-    out_fname_base='fv3_out_phy_'+domain+'_gfdl_'+res+'_'
+out_title_base='FV3LAM::PHY::'
+out_fname_base='fv3lam_out_phy_'
 
 # Resolution of background natural earth data ('10m' or '50m' or '110m')
 back_res='50m'
-
-# Machine-specific mfdataset arguments
-if machine=='hera':
-    mfdt_kwargs={'parallel':False}
-elif machine=='orion':
-    mfdt_kwargs={'parallel':False,'combine':'by_coords'}
-else:
-    mfdt_kwargs={'parallel':False}
 
 
 
