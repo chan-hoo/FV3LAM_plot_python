@@ -6,6 +6,7 @@
 ## NOAA/NWS/NCEP/EMC
 ## History ===============================
 ## V000: 2020/07/14: Chan-Hoo Jeon : Preliminary version
+## V001: 2021/03/05: Chan-Hoo Jeon : Simplify the script
 ###################################################################### CHJ #####
 
 import os, sys
@@ -26,44 +27,35 @@ machine='hera'
 
 print(' You are on', machine)
 
-# Path to Natural Earth Data-set for background plot
+#### Machine-specific input data ==================================== CHJ =====
+# cartopy.config: Natural Earth data for background
+# out_fig_dir: directory where the output files are created
+# mfdt_kwargs: mfdataset argument
+
 if machine=='hera':
     cartopy.config['data_dir']='/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/NaturalEarth'
+    out_fig_dir="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/fv3sar_pre_plot/Fig/"
 elif machine=='orion':
     cartopy.config['data_dir']='/home/chjeon/tools/NaturalEarth'
+    out_fig_dir="/work/noaa/fv3-cam/chjeon/tools/Fig/"
 else:
-    sys.exit('ERROR: path to Natural Earth Data is not set !!!')
+    sys.exit('ERROR: Required input data are NOT set !!!')
 
 plt.switch_backend('agg')
 
-# Global variables ======================================== CHJ =====
-# ..... Case-dependent input :: should be changed case-by-case .....
-# ******
-# INPUT
-# ******
+# Case-dependent input =============================================== CHJ =====
 # Path to the directory where the input file is located.
 dnm_data="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/run_C96/"
 
 # input file name
 fnm_in='co2historicaldata_2020.txt'
 
-# *******
-# OUTPUT
-# *******
-# Path to directory
-if machine=='hera':
-    out_fig_dir="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/fv3sar_pre_plot/Fig/"
-elif machine=='orion':
-    out_fig_dir="/work/noaa/fv3-cam/chjeon/tools/Fig/"
-else:
-    sys.exit('ERROR: path to output directory is not set !!!')
-
 year=fnm_in[-8:-4]
 print(' year=',year)
 
 # basic forms of title and file name
-out_title_base='Monthly CO2 in '+year+'::'
-out_fname_base='fv3_co2his_'
+out_title_base='FV3LAM::Monthly CO2 in '+year+'::'
+out_fname_base='fv3lam_co2his_'
 
 # Resolution of background natural earth data ('50m' or '110m')
 back_res='110m'
