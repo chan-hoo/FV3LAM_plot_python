@@ -1,5 +1,5 @@
 ###################################################################### CHJ #####
-## Name		: plot_fv3lam_atmstt.py
+## Name		: plot_fv3lam_atmstat.py
 ## Language	: Python 3.7
 ## Usage	: Plot an output, atmos_static, for fv3 regional modeling
 ## Input files  : atmos_static.nc
@@ -7,6 +7,7 @@
 ## History ===============================
 ## V000: 2020/04/27: Chan-Hoo Jeon : Preliminary version
 ## V001: 2020/06/22: Chan-Hoo Jeon : Add opt. for machine-specific arguments
+## V002: 2021/03/05: Chan-Hoo Jeon : Simplify the script
 ###################################################################### CHJ #####
 
 import os, sys
@@ -26,80 +27,45 @@ machine='hera'
 
 print(' You are on', machine)
 
-# Path to Natural Earth Data-set for background plot
+#### Machine-specific input data ==================================== CHJ =====
+# cartopy.config: Natural Earth data for background
+# out_fig_dir: directory where the output files are created
+# mfdt_kwargs: mfdataset argument
+
 if machine=='hera':
     cartopy.config['data_dir']='/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/NaturalEarth'
+    out_fig_dir="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/fv3sar_pre_plot/Fig/"
+    mfdt_kwargs={'parallel':False}
 elif machine=='orion':
     cartopy.config['data_dir']='/home/chjeon/tools/NaturalEarth'
+    out_fig_dir="/work/noaa/fv3-cam/chjeon/tools/Fig/"
+    mfdt_kwargs={'parallel':False,'combine':'by_coords'}
 else:
-    sys.exit('ERROR: path to Natural Earth Data is not set !!!')
+    sys.exit('ERROR: Required input data are NOT set !!!')
 
 plt.switch_backend('agg')
 
-# Global variables ======================================== CHJ =====
-# ..... Case-dependent input :: should be changed case-by-case .....
-# ******
-# INPUT
-# ******
+# Case-dependent input =============================================== CHJ =====
+
 # Path to the directory where the input NetCDF file is located.
-dnm_out="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/run_C96/"
+dnm_out="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/expt_dirs/test_community/2020122700/"
 
 # grid file name
 fnm_input='atmos_static.nc'
 
-# Domain name:
-domain='CONUS'
-
-# Grid resolution ('C96'/'C768'):
-res='C96'
-
-# Grid type ('ESG'/'GFDL')
-gtype='GFDL'
-
-# GFDL grid-refinement ratio (for ESG grid, refine=0)
-if gtype=='ESG':
-    refine=0
-elif gtype=='GFDL':
-    refine=3
-
-# Input grid file name (grid/orography)
-dnm_ref="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/C96/"
-fnm_ref_oro=res+'_oro_data.tile7.halo0.nc'
+# Input orography file for reference grid
+dnm_ref="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/expt_dirs/test_community/2020122700/INPUT/"
+fnm_ref_oro='oro_data.nc'
 
 # variables
 vars_atm=["pk","bk","hyam","hybm","zsurf"]
-#vars_atm=["pk","bk","zsurf"]
-
-
-# *******
-# OUTPUT
-# *******
-# Path to directory
-if machine=='hera':
-    out_fig_dir="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/fv3sar_pre_plot/Fig/"
-elif machine=='orion':
-    out_fig_dir="/work/noaa/fv3-cam/chjeon/tools/Fig/"
-else:
-    sys.exit('ERROR: path to output directory is not set !!!')
 
 # basic forms of title and file name: base+static field name
-if gtype=='ESG':
-    out_title_base='ATMOS_STATIC::'+domain+'(ESG)::'+res+'::'
-    out_fname_base='fv3_out_atmfix_'+domain+'_esg_'+res+'_'
-elif gtype=='GFDL':
-    out_title_base='ATMOS_STATIC::'+domain+'(GFDL)::'+res+'(x'+str(refine)+')'+'::'
-    out_fname_base='fv3_out_atmfix_'+domain+'_gfdl_'+res+'_'
+out_title_base='FV3LAM::ATMOS_STATIC::'
+out_fname_base='fv3lam_out_atmfix_'
 
 # Resolution of background natural earth data ('50m' or '110m')
 back_res='50m'
-
-# Machine-specific mfdataset arguments
-if machine=='hera':
-    mfdt_kwargs={'parallel':False}
-elif machine=='orion':
-    mfdt_kwargs={'parallel':False,'combine':'by_coords'}
-else:
-    mfdt_kwargs={'parallel':False}
 
 
 # Main part (will be called at the end) =================== CHJ =====
