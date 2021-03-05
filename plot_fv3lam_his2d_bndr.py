@@ -6,6 +6,7 @@
 ## NOAA/NWS/NCEP/EMC
 ## History ===============================
 ## V000: 2020/12/24: Chan-Hoo Jeon : Preliminary version
+## V001: 2021/03/05: Chan-Hoo Jeon : Simplify the script
 ###################################################################### CHJ #####
 
 import os, sys
@@ -25,11 +26,7 @@ print(' You are on', machine)
 
 plt.switch_backend('agg')
 
-# Global variables ======================================== CHJ =====
-# ..... Case-dependent input :: should be changed case-by-case .....
-# ******
-# INPUT
-# ******
+# Case-dependent input =============================================== CHJ =====
 # Path to the directory where the input NetCDF file is located.
 dnm_in="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/test/"
 
@@ -50,47 +47,19 @@ dtick_s=2
 # tick interval for long sides
 dtick_l=200
 
-
-# Domain name:
-domain='HRRR'
-# Grid resolution ('C96'/'C768'):
-res='C768'
-# Grid type ('ESG'/'GFDL')
-gtype='ESG'
-# GFDL grid-refinement ratio (for ESG grid, refine=0)
-if gtype=='ESG':
-    refine=0
-elif gtype=='GFDL':
-    refine=3
-
-
-# *******
-# OUTPUT
-# *******
 # Path to directory
 if machine=='hera':
     out_fig_dir="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/fv3sar_pre_plot/Fig/"
+    mfdt_kwargs={'parallel':False}
 elif machine=='orion':
     out_fig_dir="/work/noaa/fv3-cam/chjeon/tools/Fig/"
+    mfdt_kwargs={'parallel':False,'combine':'by_coords'}
 else:
     sys.exit('ERROR: path to output directory is not set !!!')
 
 # basic forms of title and file name
-if gtype=='ESG':
-    out_title_base='FV3::HIS2D::'+domain+'(ESG)::'+res+'::'
-    out_fname_base='fv3_out_his2d_'+domain+'_esg_'+res+'_'
-elif gtype=='GFDL':
-    out_title_base='PHY::'+domain+'(GFDL)::'+res+'(x'+str(refine)+')'+'::'
-    out_fname_base='fv3_out_his2d_'+domain+'_gfdl_'+res+'_'
-
-# Machine-specific mfdataset arguments
-if machine=='hera':
-    mfdt_kwargs={'parallel':False}
-elif machine=='orion':
-    mfdt_kwargs={'parallel':False,'combine':'by_coords'}
-else:
-    mfdt_kwargs={'parallel':False}
-
+out_title_base='FV3LAM::HIS2D::'
+out_fname_base='fv3lam_out_his2d_'
 
 
 # Main part (will be called at the end) ======================= CHJ =====
