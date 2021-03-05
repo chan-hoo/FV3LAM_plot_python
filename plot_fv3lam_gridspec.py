@@ -7,6 +7,7 @@
 ## History ===============================
 ## V000: 2020/04/24: Chan-Hoo Jeon : Preliminary version
 ## V001: 2020/06/22: Chan-Hoo Jeon : Add opt. for machine-specific arguments
+## V002: 2021/03/05: Chan-Hoo Jeon : Simplify the script
 ###################################################################### CHJ #####
 
 import os, sys
@@ -27,80 +28,45 @@ machine='hera'
 
 print(' You are on', machine)
 
-# Path to Natural Earth Data-set for background plot
+#### Machine-specific input data ==================================== CHJ =====
+# cartopy.config: Natural Earth data for background
+# out_fig_dir: directory where the output files are created
+# mfdt_kwargs: mfdataset argument
+
 if machine=='hera':
     cartopy.config['data_dir']='/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/NaturalEarth'
+    out_fig_dir="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/fv3sar_pre_plot/Fig/"
+    mfdt_kwargs={'parallel':False}
 elif machine=='orion':
     cartopy.config['data_dir']='/home/chjeon/tools/NaturalEarth'
+    out_fig_dir="/work/noaa/fv3-cam/chjeon/tools/Fig/"
+    mfdt_kwargs={'parallel':False,'combine':'by_coords'}
 else:
-    sys.exit('ERROR: path to Natural Earth Data is not set !!!')
+    sys.exit('ERROR: Required input data are NOT set !!!')
 
 plt.switch_backend('agg')
 
-# Global variables ======================================== CHJ =====
-# ..... Case-dependent input :: should be changed case-by-case .....
-# ******
-# INPUT
-# ******
+# Case-dependent input =============================================== CHJ =====
 # Path to the directory where the input NetCDF file is located.
-dnm_out="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/run_C96/"
+dnm_out="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/expt_dirs/test_community/2020122700/"
 
 # grid file name
 fnm_input='grid_spec.nc'
 
-# Domain name:
-domain='CONUS'
-
-# Grid resolution ('C96'/'C768'):
-res='C96'
-
-# Grid type ('ESG'/'GFDL')
-gtype='GFDL'
-
-# GFDL grid-refinement ratio (for ESG grid, refine=0)
-if gtype=='ESG':
-    refine=0
-elif gtype=='GFDL':
-    refine=3
-
 # Number of grid points in plotting
 n_gpt=20
 
-# Input grid file name (grid/orography)
-dnm_ref="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/C96/"
-fnm_ref_grd=res+'_grid.tile7.halo0.nc'
-fnm_ref_oro=res+'_oro_data.tile7.halo0.nc'
-
-
-# *******
-# OUTPUT
-# *******
-# Path to directory
-if machine=='hera':
-    out_fig_dir="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/fv3sar_pre_plot/Fig/"
-elif machine=='orion':
-    out_fig_dir="/work/noaa/fv3-cam/chjeon/tools/Fig/"
-else:
-    sys.exit('ERROR: path to output directory is not set !!!')
+# Input grid file name (grid/orography w/ halo4)
+dnm_ref="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/expt_dirs/test_community/2020122700/INPUT/"
+fnm_ref_grd='grid.tile7.halo4.nc'
+fnm_ref_oro='oro_data.tile7.halo4.nc'
 
 # basic forms of title and file name
-if gtype=='ESG':
-    out_grd_title='GRID_SPEC::'+domain+'(ESG)::'+res
-    out_grd_fname='fv3_out_grdspec_'+domain+'_esg_'+res
-elif gtype=='GFDL':
-    out_grd_title='GRID_SPEC::'+domain+'(GFDL)::'+res+'(x'+str(refine)+')'
-    out_grd_fname='fv3_out_grdspec_'+domain+'_gfdl_'+res
+out_grd_title='FV3LAM::GRID_SPEC::'
+out_grd_fname='fv3lam_out_grdspec'
 
 # Resolution of background natural earth data ('50m' or '110m')
 back_res='50m'
-
-# Machine-specific mfdataset arguments
-if machine=='hera':
-    mfdt_kwargs={'parallel':False}
-elif machine=='orion':
-    mfdt_kwargs={'parallel':False,'combine':'by_coords'}
-else:
-    mfdt_kwargs={'parallel':False}
 
 
 # Main part (will be called at the end) =================== CHJ =====
@@ -119,7 +85,7 @@ def main():
     golont=np.ma.masked_invalid(grdo['grid_lont'].data)
     golatt=np.ma.masked_invalid(grdo['grid_latt'].data)
 
-    print(' ===== REFERENCE: Super-grid (halo0) =======================')
+    print(' ===== REFERENCE: Super-grid (halo4) =======================')
     # open the data file
     fname=os.path.join(dnm_ref,fnm_ref_grd)
     try: refg=xr.open_mfdataset(fname,**mfdt_kwargs)
@@ -129,7 +95,7 @@ def main():
     ref_glon=np.ma.masked_invalid(refg['x'].data)
     ref_glat=np.ma.masked_invalid(refg['y'].data)
   
-    print(' ===== REFERENCE: Orography-grid (halo0) ==================')
+    print(' ===== REFERENCE: Orography-grid (halo4) ==================')
     # open the data file
     fname=os.path.join(dnm_ref,fnm_ref_oro)
     try: refo=xr.open_mfdataset(fname,**mfdt_kwargs)
@@ -146,11 +112,13 @@ def main():
     golatt_c=golatt[:n_gpt,:n_gpt]
 
     n_gpt2=n_gpt*2
-    ref_glon_c=ref_glon[:n_gpt2,:n_gpt2]
-    ref_glat_c=ref_glat[:n_gpt2,:n_gpt2]
+    nhalo=4
+    nhalo2=nhalo*2
+    ref_glon_c=ref_glon[:n_gpt2+nhalo2,:n_gpt2+nhalo2]
+    ref_glat_c=ref_glat[:n_gpt2+nhalo2,:n_gpt2+nhalo2]
     
-    ref_olon_c=ref_olon[:n_gpt,:n_gpt]
-    ref_olat_c=ref_olat[:n_gpt,:n_gpt]
+    ref_olon_c=ref_olon[:n_gpt+nhalo,:n_gpt+nhalo]
+    ref_olat_c=ref_olat[:n_gpt+nhalo,:n_gpt+nhalo]
 
     # Highest and lowest longitudes and latitudes for plot extent
     lon_min=np.min(ref_glon_c)
@@ -159,7 +127,7 @@ def main():
     lat_max=np.max(ref_glat_c)
 
     # Plot extent
-    extent=[lon_min-0.1,lon_max+0.1,lat_min-0.1,lat_max+0.1]
+    extent=[lon_min-0.1,lon_max+1,lat_min-0.1,lat_max+1]
     c_lon=np.mean(extent[:2])
     c_lat=np.mean(extent[2:])
 
@@ -184,7 +152,7 @@ def main():
     s4=ax.scatter(golont_c,golatt_c,transform=ccrs.PlateCarree(),marker='*',
        facecolors='blue',edgecolors='blue',linewidth=0.3,s=sp_scale,zorder=6)
 
-    ref_txt='First '+str(n_gpt)+' grid points from Top-Right'
+    ref_txt='First '+str(n_gpt)+' grid points from Bottom-Left'
     plt.text(lon_min,lat_min-0.05,ref_txt,transform=ccrs.Geodetic(),fontsize=8)
     plt.legend((s1,s2,s3,s4),('super-grid','oro-grid','lon/lat','lont/latt'),scatterpoints=1,loc='upper right',ncol=2,fontsize=8)
 
