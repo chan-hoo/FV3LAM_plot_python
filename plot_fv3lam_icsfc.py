@@ -8,6 +8,7 @@
 ## V000: 2020/03/26: Chan-Hoo Jeon : Preliminary version
 ## V001: 2020/04/07: Chan-Hoo Jeon : Add refine ratio to output titles
 ## V002: 2020/06/22: Chan-Hoo Jeon : Add opt. for machine-specific arguments
+## V003: 2021/03/05: Chan-Hoo Jeon : Simplify the script
 ###################################################################### CHJ #####
 
 import os, sys
@@ -27,85 +28,48 @@ machine='hera'
 
 print(' You are on', machine)
 
-# Path to Natural Earth Data-set for background plot
+#### Machine-specific input data ==================================== CHJ =====
+# cartopy.config: Natural Earth data for background
+# out_fig_dir: directory where the output files are created
+# mfdt_kwargs: mfdataset argument
+
 if machine=='hera':
     cartopy.config['data_dir']='/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/NaturalEarth'
+    out_fig_dir="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/fv3sar_pre_plot/Fig/"
+    mfdt_kwargs={'parallel':False}
 elif machine=='orion':
     cartopy.config['data_dir']='/home/chjeon/tools/NaturalEarth'
+    out_fig_dir="/work/noaa/fv3-cam/chjeon/tools/Fig/"
+    mfdt_kwargs={'parallel':False,'combine':'by_coords'}
 else:
-    sys.exit('ERROR: path to Natural Earth Data is not set !!!')
+    sys.exit('ERROR: Required input data are NOT set !!!')
 
 plt.switch_backend('agg')
 
-# Global variables ======================================== CHJ =====
-# ..... Case-dependent input :: should be changed case-by-case .....
-# ******
-# INPUT
-# ******
+# Case-dependent input =============================================== CHJ =====
 # Path to the directory where the input NetCDF file is located.
-dnm_data="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/C96/"
-#dnm_data="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/brz_C768/"
+dnm_data="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/expt_dirs/grid_RRFS_CONUS_25km_ics_FV3GFS_lbcs_FV3GFS_suite_GFS_v15p2/2019070100/INPUT/"
 
 # Path to the orography file
 oro_path=dnm_data
 
 # Input NetCDF file names
-fnm_input='sfc_data.tile7.nc'
-
-# Domain name:
-domain='CONUS'
-
-# Grid resolution ('C96'/'C768'):
-res='C96'
-
-# Grid type ('ESG'/'GFDL')
-gtype='GFDL'
-
-# GFDL grid-refinement ratio (for ESG grid, refine=0)
-if gtype=='ESG':
-    refine=0
-elif gtype=='GFDL':
-    refine=3
+fnm_input='sfc_data.nc'
 
 # Orography data file (w/ halo0) for coordinates
-fnm_in_orog=res+'_oro_data.tile7.halo0.nc'
+fnm_in_orog='oro_data.nc'
 
 # Static fields
 #vars_isfc=["alvsf","alvwf","alnsf","alnwf"]
-vars_isfc=["slmsk","snoalb","zorl"]
-#vars_isfc=["t2m","tg3","tisfc","tsea"]
+vars_isfc=["slmsk","snoalb"]
 #vars_isfc=["slope","stype","vtype"]
-#vars_isfc=["stc"]
-
-# *******
-# OUTPUT
-# *******
-# Path to directory
-if machine=='hera':
-    out_fig_dir="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/fv3sar_pre_plot/Fig/"
-elif machine=='orion':
-    out_fig_dir="/work/noaa/fv3-cam/chjeon/tools/Fig/"
-else:
-    sys.exit('ERROR: path to output directory is not set !!!')
 
 # basic forms of title and file name: base+static field name
-if gtype=='ESG':
-    out_title_base='IC(SFC)::'+domain+'(ESG)::'+res+'::'
-    out_fname_base='fv3_isfc_'+domain+'_esg_'+res+'_'
-elif gtype=='GFDL':
-    out_title_base='IC(SFC)::'+domain+'(GFDL)::'+res+'(x'+str(refine)+')::'
-    out_fname_base='fv3_isfc_'+domain+'_gfdl_'+res+'_'
+out_title_base='FV3LAM::IC(SFC)::'
+out_fname_base='fv3lam_isfc_'
 
 # Resolution of background natural earth data ('50m' or '110m')
 back_res='50m'
-
-# Machine-specific mfdataset arguments
-if machine=='hera':
-    mfdt_kwargs={'parallel':False}
-elif machine=='orion':
-    mfdt_kwargs={'parallel':False,'combine':'by_coords'}
-else:
-    mfdt_kwargs={'parallel':False}
 
 
 # Main part (will be called at the end) =================== CHJ =====
