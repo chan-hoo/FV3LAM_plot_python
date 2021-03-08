@@ -31,16 +31,13 @@ print(' You are on', machine)
 #### Machine-specific input data ==================================== CHJ =====
 # cartopy.config: Natural Earth data for background
 # out_fig_dir: directory where the output files are created
-# mfdt_kwargs: mfdataset argument
 
 if machine=='hera':
     cartopy.config['data_dir']='/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/NaturalEarth'
     out_fig_dir="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/fv3sar_pre_plot/Fig/"
-    mfdt_kwargs={'parallel':False}
 elif machine=='orion':
     cartopy.config['data_dir']='/home/chjeon/tools/NaturalEarth'
     out_fig_dir="/work/noaa/fv3-cam/chjeon/tools/Fig/"
-    mfdt_kwargs={'parallel':False,'combine':'by_coords'}
 else:
     sys.exit('ERROR: Required input data are NOT set !!!')
 
@@ -48,7 +45,7 @@ plt.switch_backend('agg')
 
 # Case-dependent input =============================================== CHJ =====
 # Path to the directory where the input NetCDF files are located.
-dnm_data="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/expt_dirs/test_community/2020122700/postprd/"
+dnm_data="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/srw_dev/expt_dirs/grid_RRFS_CONUS_25km_ics_FV3GFS_lbcs_FV3GFS_suite_GFS_v15p2/2019070100/postprd/"
 
 # Input file hour number
 fnm_hr='f003'

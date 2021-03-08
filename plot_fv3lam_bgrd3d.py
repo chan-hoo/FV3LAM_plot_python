@@ -32,7 +32,6 @@ print(' You are on', machine)
 #### Machine-specific input data ==================================== CHJ =====
 # cartopy.config: Natural Earth data for background
 # out_fig_dir: directory where the output files are created
-# mfdt_kwargs: mfdataset argument
 
 if machine=='hera':
     cartopy.config['data_dir']='/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/NaturalEarth'
