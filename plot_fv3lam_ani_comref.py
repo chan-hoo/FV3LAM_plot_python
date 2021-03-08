@@ -7,6 +7,7 @@
 ## History ===============================
 ## V000: 2020/08/03: Chan-Hoo Jeon : Preliminary version
 ## V001: 2020/08/05: Chan-Hoo Jeon : Fix the issue of colorbar duplication
+## V002: 2021/03/05: Chan-Hoo Jeon : Minor change for consistency with other scripts
 ###################################################################### CHJ #####
 
 import os, sys
@@ -30,61 +31,44 @@ machine='hera'
 
 print(' You are on', machine)
 
-# Path to Natural Earth Data-set for background plot
+#### Machine-specific input data ==================================== CHJ =====
+# path_NE: Natural Earth data for background
+# out_fig_dir: directory where the output files are created
+
 if machine=='hera':
     path_NE='/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/NaturalEarth'
+    out_fig_dir="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/fv3sar_pre_plot/Fig/"
 elif machine=='orion':
     path_NE='/home/chjeon/tools/NaturalEarth'
+    out_fig_dir="/work/noaa/fv3-cam/chjeon/tools/Fig/"
 else:
-    sys.exit('ERROR: path to Natural Earth Data is not set !!!')
+    sys.exit('ERROR: path to Natural Earth Data or output dir is not set !!!')
 
 cartopy.config['data_dir']=path_NE
 os.environ["CARTOPY_USER_BACKGROUNDS"]=path_NE+'/raster_files'
 
 plt.switch_backend('agg')
 
-# Global variables ======================================== CHJ =====
-# ..... Case-dependent input :: should be changed case-by-case .....
-# ******
-# INPUT
-# ******
-# Domain name:
-domain='HRRR'
-# Resolution:
-res='25km'
-
+# Case-dependent input =============================================== CHJ =====
 # date
-s_date='20200618'
+s_date='20190701'
 # plotting hours for animation
-plot_hrs=['01','02','03','04','05','06']
+plot_hrs=['03','06']
 
 icmax=len(plot_hrs)
 
 # Path to the directory where the input NetCDF files are located.
-dnm_data_mdl="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/expt_dirs/test_community_hrrr25/2020061800/postprd/"
-dnm_data_dat="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/TMP/mrms_"+s_date+"/new_grib2/"
-
+dnm_data_mdl="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/srw_dev/expt_dirs/grid_RRFS_CONUS_25km_ics_FV3GFS_lbcs_FV3GFS_suite_GFS_v15p2/2019070100/postprd/"
+dnm_data_dat="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/00_DATA/MRMS/mrms_"+s_date+"00/new_grib2/"
 
 # Output fields
 svar="Reflectivity"
-
-
-# *******
-# OUTPUT
-# *******
-# Path to directory
-if machine=='hera':
-    out_fig_dir="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/fv3sar_pre_plot/Fig/"
-elif machine=='orion':
-    out_fig_dir="/work/noaa/fv3-cam/chjeon/tools/Fig/"
-else:
-    sys.exit('ERROR: path to output directory is not set !!!')
 
 # Title and file name
 out_title_sub1='FV3-LAM'
 out_title_sub2='MRMS Radar Data'
 
-out_fname='fv3_out_ani_refl_comp_'+domain
+out_fname='fv3lam_out_ani_refl_comp'
 
 # Resolution of background natural earth data ('10m' or '50m' or '110m')
 back_res='50m'
@@ -112,7 +96,7 @@ def read_data():
         shr=plot_hrs[ic]
         print(ic,shr)
         # Input file (BGDAWPXX.tmXX)
-        fnm_in_mdl=domain+'.t00z.bgdawp'+shr+'.tm00'
+        fnm_in_mdl='rrfs.t00z.bgdawpf0'+shr+'.tm00.grib2'
         fnm_in_dat='QCComposite_00.50_'+s_date+shr+'00_new.grib2'
 
         print(' ===== Read result file ===== '+plot_hrs[ic]+' ==========================')
@@ -185,7 +169,7 @@ def plot_comp():
     # Plot field
     fig=plt.figure(figsize=(3,2.8))   #(width,height)
     spec_fig=fig.add_gridspec(2,1)
-    out_title_super='Composite Reflectivity::'+domain+'('+res+')::'+s_date+'/  '
+    out_title_super='Composite Reflectivity::'+s_date+'/  '
     fig.suptitle(out_title_super,fontsize=lb_fnt+2)
     ax1=fig.add_subplot(spec_fig[0,0],projection=ccrs.PlateCarree(c_lon))
     ax2=fig.add_subplot(spec_fig[1,0],projection=ccrs.PlateCarree(c_lon))
@@ -206,7 +190,7 @@ def plot_comp():
 def animate(ic):
 # ========================================================== CHJ =====
     shr=plot_hrs[ic]
-    out_title_super='Composite Reflectivity::'+domain+'('+res+')::'+s_date+'/'+shr
+    out_title_super='Composite Reflectivity::'+s_date+'/'+shr
     fig.suptitle(out_title_super,fontsize=lb_fnt+2)
     # subplot 1: composite reflectivity + target point lines
     ax1.clear()
