@@ -8,6 +8,7 @@
 ## V000: 2020/07/24: Chan-Hoo Jeon : Preliminary version
 ## V001: 2020/07/28: Chan-Hoo Jeon : Add 3D plot option
 ## V002: 2020/07/29: Chan-Hoo Jeon : Add cross-sectional plot option
+## V003: 2021/03/05: Chan-Hoo Jeon : Simplify the script
 ###################################################################### CHJ #####
 
 import os,sys,time
@@ -38,10 +39,12 @@ print(' You are on', machine)
 # Path to Natural Earth Data-set for background plot
 if machine=='hera':
     path_NE='/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/NaturalEarth'
+    out_fig_dir="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/fv3sar_pre_plot/Fig/"
 elif machine=='orion':
     path_NE='/home/chjeon/tools/NaturalEarth'
+    out_fig_dir="/work/noaa/fv3-cam/chjeon/tools/Fig/"
 else:
-    sys.exit('ERROR: path to Natural Earth Data is not set !!!')
+    sys.exit('ERROR: path to Natural Earth Data or output dir. is not set !!!')
 
 cartopy.config['data_dir']=path_NE
 os.environ["CARTOPY_USER_BACKGROUNDS"]=path_NE+'/raster_files'
@@ -54,26 +57,23 @@ plt.switch_backend('agg')
 # INPUT
 # ******
 
-s_date='20200618'
-s_time='0600'
+s_date='2019070100'
+s_time='03'
 
 # Path to the directory where the input file is located.
-dnm_data='/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/TMP/mrms_'+s_date+s_time[0:2]+'/new_grib2/'
-
-# Domain name:
-domain='HRRR'
+dnm_data='/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/00_DATA/MRMS/mrms_'+s_date+'/new_grib2/'
 
 # Input file name
-fnm_in_com='QCComposite_00.50_'+s_date+s_time+'_new.grib2'
-fnm_in_3d='ref3D_'+s_date+s_time+'_new.grib2'
+fnm_in_com='QCComposite_00.50_'+s_date[0:8]+s_time+'00_new.grib2'
+fnm_in_3d='ref3D_'+s_date[0:8]+s_time+'00_new.grib2'
 
 # Flag for composite reflectivity
-plt_com='no'
+plt_com='yes'
 # Flag for cross-sectional reflectivity
-plt_crx='no'
+plt_crx='yes'
 # target lon,lat for cross-section/3d (in degrees)
 crx_lon=-99
-crx_lat=45
+crx_lat=43.7
 # Distance from the target point (in degrees)
 crx_dist=4
 # Flag for 3d reflectivity
@@ -81,25 +81,11 @@ plt_3d='yes'
 # plotting layers' index numbers (only for 3d):
 plt_hght_i=[0,2,4,6]
 
-
-# *******
-# OUTPUT
-# *******
-# Path to directory
-if machine=='hera':
-    out_fig_dir="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/fv3sar_pre_plot/Fig/"
-elif machine=='orion':
-    out_fig_dir="/work/noaa/fv3-cam/chjeon/tools/Fig/"
-else:
-    sys.exit('ERROR: path to output directory is not set !!!')
-
 # Title and output file name:
-out_title_com='MRMS::Composite Reflectivity::'+domain.upper()+'::'+s_date+'/'+s_time
-out_fname_com='fv3_mrms_comRefl_'+domain+'_'+s_date+'_'+s_time
-
-out_fname_crx='fv3_mrms_xzRefl_'+domain+'_'+s_date+'_'+s_time
-out_fname_3d='fv3_mrms_3dRefl_'+domain+'_'+s_date+'_'+s_time
-
+out_title_com='MRMS::Composite Reflectivity::'+s_date+'/'+s_time
+out_fname_com='fv3lam_mrms_comRefl_'+s_date+'_'+s_time
+out_fname_crx='fv3lam_mrms_xzRefl_'+s_date+'_'+s_time
+out_fname_3d='fv3lam_mrms_3dRefl_'+s_date+'_'+s_time
 
 # Resolution of background natural earth data ('10m' or '50m' or '110m')
 back_res='50m'
@@ -165,16 +151,14 @@ def plot_composite():
     cmap_range='designed'
 
     # Highest and lowest longitudes and latitudes for plot extent
-    if domain=='HRRR':
-        lon_min=-128.39
-        lon_max=-66.62
-        lat_min=25.12
-        lat_max=49.23
-    else:
-        lon_min=np.min(lon)
-        lon_max=np.max(lon)
-        lat_min=np.min(lat)
-        lat_max=np.max(lat)
+#        lon_min=-128.39
+#        lon_max=-66.62
+#        lat_min=25.12
+#        lat_max=49.23
+    lon_min=np.min(lon)
+    lon_max=np.max(lon)
+    lat_min=np.min(lat)
+    lat_max=np.max(lat)
 
     print(' lon_min=',lon_min,', lon_max=',lon_max)
     print(' lat_min=',lat_min,', lat_max=',lat_max)
@@ -397,16 +381,14 @@ def plot_xsect():
     cmap_range='designed'
 
     # Highest and lowest longitudes and latitudes for plot extent
-    if domain=='HRRR':
-        lon_min=-128.39
-        lon_max=-66.62
-        lat_min=25.12
-        lat_max=49.23
-    else:
-        lon_min=np.min(lon)
-        lon_max=np.max(lon)
-        lat_min=np.min(lat)
-        lat_max=np.max(lat)
+    #lon_min=-128.39
+    #lon_max=-66.62
+    #lat_min=25.12
+    #lat_max=49.23
+    lon_min=np.min(lon)
+    lon_max=np.max(lon)
+    lat_min=np.min(lat)
+    lat_max=np.max(lat)
 
     print(' lon_min=',lon_min,', lon_max=',lon_max)
     print(' lat_min=',lat_min,', lat_max=',lat_max)

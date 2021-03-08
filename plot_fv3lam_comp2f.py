@@ -9,6 +9,7 @@
 ## V001: 2020/06/22: Chan-Hoo Jeon : Add opt. for machine-specific arguments
 ## V002: 2020/10/20: Chan-Hoo Jeon : Add opt. for orography
 ## V003: 2021/01/20: Chan-Hoo Jeon : Modify opt. for gfs_data
+## V004: 2021/03/05: Chan-Hoo Jeon : Simplify the script
 ###################################################################### CHJ #####
 
 import os, sys
@@ -29,98 +30,63 @@ machine='hera'
 
 print(' You are on', machine)
 
-# Path to Natural Earth Data-set for background plot
+#### Machine-specific input data ==================================== CHJ =====
+# cartopy.config: Natural Earth data for background
+# out_fig_dir: directory where the output files are created
+# mfdt_kwargs: mfdataset argument
+
 if machine=='hera':
     cartopy.config['data_dir']='/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/NaturalEarth'
+    out_fig_dir="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/fv3sar_pre_plot/Fig/"
+    mfdt_kwargs={'parallel':False}
 elif machine=='orion':
     cartopy.config['data_dir']='/home/chjeon/tools/NaturalEarth'
+    out_fig_dir="/work/noaa/fv3-cam/chjeon/tools/Fig/"
+    mfdt_kwargs={'parallel':False,'combine':'by_coords'}
 else:
-    sys.exit('ERROR: path to Natural Earth Data is not set !!!')
+    sys.exit('ERROR: Required input data are NOT set !!!')
 
 plt.switch_backend('agg')
 
-# Global variables ======================================== CHJ =====
-# ..... Case-dependent input :: should be changed case-by-case .....
-# ******
-# INPUT
-# ******
+# Case-dependent input =============================================== CHJ =====
+
 # Path to the directories where the input files are located.
-dnm_in1="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/test_srw/expt_dirs/debug_6h/2021011900/INPUT/"
-dnm_in2="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/test_srw/expt_dirs/debug_6h9h/2021011906/INPUT/"
+dnm_in1="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/expt_dirs/test_community/2020122700/"
+dnm_in2=dnm_in1
 
 # Input file name
-fnm_in1='gfs_data.nc'
-fnm_in2='gfs_data.nc'
-
-# Domain name:
-domain='CONUS'
-
-# Grid resolution ('C96'/'C768'):
-res='C96'
-
-# Grid type ('ESG'/'GFDL')
-gtype='GFDL'
-
-# GFDL grid-refinement ratio (for ESG grid, refine=0)
-if gtype=='ESG':
-    refine=0
-elif gtype=='GFDL':
-    refine=3
+fnm_in1='phyf001.nc'
+fnm_in2='phyf002.nc'
 
 print(fnm_in1[-5:])
 
 # Variables
-vars_comp=["ps"]
-
+#vars_comp=["ps"]
+vars_comp=["tmp2m"]
 
 if fnm_in1[-2:]=='nc':
     ftype=1
 elif fnm_in1[-5:]=='grib2':
     ftype=2
-
-#    grb_name='10 metre U wind component'
-#    grb_typlvl='heightAboveGround'
     grb_name='2 metre temperature'
     grb_typlvl='heightAboveGround'
- 
     ilvl=1
-
     ilvlm=ilvl-1
 else:
     sys.exit('ERROR: wrong data type !!!')
 
 # Label for comp. 
-cmp_lbl="Diff of ps"
-
-# *******
-# OUTPUT
-# *******
-# Path to directory
-if machine=='hera':
-    out_fig_dir="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/fv3sar_pre_plot/Fig/"
-elif machine=='orion':
-    out_fig_dir="/work/noaa/fv3-cam/chjeon/tools/Fig/"
-else:
-    sys.exit('ERROR: path to output directory is not set !!!')
+cmp_lbl="Diff of 2m temp."
 
 # basic forms of title and file name
-if gtype=='ESG':
-    out_title_base='COMP::'+domain+'(ESG)::'+res+'::'+cmp_lbl+'::'
-    out_fname_base='fv3_out_comp_'+domain+'_esg_'+res+'_'
-elif gtype=='GFDL':
-    out_title_base='COMP::'+domain+'(GFDL)::'+res+'(x'+str(refine)+')'+'::'+cmp_lbl+'::'
-    out_fname_base='fv3_out_comp_'+domain+'_gfdl_'+res+'_'
+out_title_base='COMP::'+cmp_lbl+'::'
+out_fname_base='fv3lam_comp_'
+
+# Colormap range option ('symmetry','round','real','fixed')
+cmap_range='symmetry'
 
 # Resolution of background natural earth data ('50m' or '110m')
 back_res='50m'
-
-# Machine-specific mfdataset arguments
-if machine=='hera':
-    mfdt_kwargs={'parallel':False}
-elif machine=='orion':
-    mfdt_kwargs={'parallel':False,'combine':'by_coords'}
-else:
-    mfdt_kwargs={'parallel':False}
 
 
 # Main part (will be called at the end) ======================= CHJ =====
@@ -235,7 +201,7 @@ def comp_plot(svar):
     tick_wd=0.45
     tlb_sz=3
     n_rnd=5
-    cmap_range='symmetry'
+#    cmap_range='symmetry'
  
     print(' COMP. field=',nm_svar)
 
@@ -258,8 +224,8 @@ def comp_plot(svar):
         cs_min=fmin
         cs_max=fmax
     elif cmap_range=='fixed':
-        cs_min=-3.0
-        cs_max=3.0
+        cs_min=-6.0
+        cs_max=6.0
     else:
         sys.exit('ERROR: wrong colormap-range flag !!!')
 
