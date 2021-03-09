@@ -1,0 +1,3 @@
+module load intel
+module use -a /contrib/anaconda/modulefiles
+module load anaconda/latest
