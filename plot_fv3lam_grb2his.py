@@ -18,7 +18,7 @@ import numpy as np
 
 
 # HPC machine ('hera','wcoss_dell','wcoss_cray','orion')
-machine='wcoss_dell'
+machine='hera'
 
 print(' You are on', machine)
 
@@ -40,11 +40,11 @@ plt.switch_backend('agg')
 
 # Case-dependent input =============================================== CHJ =====
 # Path to the directory where the input NetCDF files are located.
-dnm_data="/gpfs/dell2/emc/modeling/noscrub/Chan-Hoo.Jeon/test_srw/expt_dirs/test_GST/2019061500/postprd/"
+dnm_data="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/srw_dev/expt_dirs/test_GST/2019061500/postprd/"
 
 # Input file hour range (start, end, interval)
 fnm_hr_s=0
-fnm_hr_e=24
+fnm_hr_e=28
 fnm_hr_i=1
 
 # basic forms of title and file name
@@ -61,10 +61,10 @@ def main():
     his_rfl_max=[]
     his_xlabel=[]
     for fhr in range(fnm_hr_s,fnm_hr_e+1,fnm_hr_i):
-        fnm_hr = str(fhr).zfill(3)
+        fnm_hr = str(fhr).zfill(2)
         his_xlabel.append(fnm_hr)
         # Input file
-        fnm_in='rrfs.t00z.bgdawpf'+fnm_hr+'.tm00.grib2'
+        fnm_in='rrfs.t00z.bgdawpf0'+fnm_hr+'.tm00.grib2'
         print(' === '+fnm_hr+' === in: '+fnm_in+' ====================')
 
         # open the data file
@@ -124,7 +124,7 @@ def main():
     def autolabel(ax,rects):
         for rect in rects:
             height=rect.get_height()
-            ax.annotate('{:.4f}'.format(height),
+            ax.annotate('{:.3f}'.format(height),
             xy=(rect.get_x()+rect.get_width()/2,height),
             xytext=(0,0.5), textcoords="offset points",
             ha='center', va='bottom',color='red',fontsize=ann_fnt)
