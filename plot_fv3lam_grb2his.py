@@ -6,6 +6,7 @@
 ## NOAA/NWS/NCEP/EMC
 ## History ===============================
 ## V000: 2021/03/08: Chan-Hoo Jeon : Preliminary version
+## V001: 2021/03/10: Chan-Hoo Jeon : Change annotation format
 ###################################################################### CHJ #####
 
 import os, sys
@@ -116,6 +117,7 @@ def main():
 
     rects2=ax2.bar(x1,his_rfl_max,bar_wdth,alpha=0.7)
     ax2.set_ylabel('Max. composite reflectivity',fontsize=txt_fnt-1)
+    ax2.set_xlabel('Output file hour (fhr)',fontsize=txt_fnt-1)
     ax2.tick_params(axis="y",labelsize=txt_fnt-2)
     ax2.set_xticks(x1)
     ax2.set_xticklabels(his_xlabel,fontsize=txt_fnt-2)
