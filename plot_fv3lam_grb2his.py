@@ -7,6 +7,7 @@
 ## History ===============================
 ## V000: 2021/03/08: Chan-Hoo Jeon : Preliminary version
 ## V001: 2021/03/10: Chan-Hoo Jeon : Change annotation format
+## V002: 2021/03/10: Chan-Hoo Jeon : Change the fields
 ###################################################################### CHJ #####
 
 import os, sys
@@ -49,7 +50,7 @@ fnm_hr_e=28
 fnm_hr_i=1
 
 # basic forms of title and file name
-out_title='FV3LAM :: Time-history of Max. Total Precipitation/Composite Reflectivity :: '+machine.upper()
+out_title='FV3LAM :: Time-history of Max. Temperature :: '+machine.upper()
 out_fname='fv3lam_out_grb2his_'+machine
 
 
@@ -75,21 +76,26 @@ def main():
 
 #        for grb in grbs:
 #            print(grb.name)
+#            print(grb.typeOfLevel)
+#            print(grb.level)
 #            print(grb.Nx)
 #            print(grb.Ny)
+#        exit()
 
-#        print(' *** Total precipitation *** ')
-        grb_tpr=grbs.select(name="Total Precipitation")[0].values*0.0393701
+#        print(' *** 2 meter Temperature *** ')
+        grb_tpr=grbs.select(name="2 metre temperature")[0].values
         grb_tpr[grb_tpr<=0]=np.nan
+        grb_tpr=(grb_tpr-273.15)*1.8+32.0
         tpr_max=np.nanmax(grb_tpr)
-        print(' tpr max = ',tpr_max)
+        print(' var1 max = ',tpr_max)
         his_tpr_max.append(tpr_max)
 
-#        print(' *** Composite radar reflectivity *** ')
-        grb_rfl=grbs.select(name="Maximum/Composite radar reflectivity")[0].values
+#        print(' *** Temperature at 100m *** ')
+        grb_rfl=grbs.select(name="Temperature",typeOfLevel="heightAboveGround")[3].values
         grb_rfl[grb_rfl<=0]=np.nan
+        grb_rfl=(grb_rfl-273.15)*1.8+32.0
         rfl_max=np.nanmax(grb_rfl)
-        print(' rfl max = ',rfl_max)
+        print(' var2 max = ',rfl_max)
         his_rfl_max.append(rfl_max)
 
     print(his_tpr_max)
@@ -98,9 +104,9 @@ def main():
     x1=np.arange(len(his_xlabel))
 
     ax_tpr_max = np.nanmax(his_tpr_max)*1.1
-    ax_tpr_min = 0.0
+    ax_tpr_min = 75.0
     ax_rfl_max = np.nanmax(his_rfl_max)*1.1
-    ax_rfl_min = 0.0
+    ax_rfl_min = 75.0
 
     txt_fnt=6
     bar_wdth=0.07
@@ -109,14 +115,14 @@ def main():
     fig,(ax1,ax2)=plt.subplots(2,1,figsize=(6,3))
     fig.suptitle(out_title,fontsize=txt_fnt+1,y=1.01)
     rects1=ax1.bar(x1,his_tpr_max,bar_wdth,alpha=0.7)
-    ax1.set_ylabel('Max. total precipitation',fontsize=txt_fnt-1)
+    ax1.set_ylabel('Max. 2m temperature (F)',fontsize=txt_fnt-1)
     ax1.tick_params(axis="y",labelsize=txt_fnt-2)
     ax1.set_xticks(x1)
     ax1.set_xticklabels(his_xlabel,fontsize=txt_fnt-2)
     ax1.set_ylim([ax_tpr_min,ax_tpr_max])
 
     rects2=ax2.bar(x1,his_rfl_max,bar_wdth,alpha=0.7)
-    ax2.set_ylabel('Max. composite reflectivity',fontsize=txt_fnt-1)
+    ax2.set_ylabel('Max. temperature at 100m (F)',fontsize=txt_fnt-1)
     ax2.set_xlabel('Output file hour (fhr)',fontsize=txt_fnt-1)
     ax2.tick_params(axis="y",labelsize=txt_fnt-2)
     ax2.set_xticks(x1)
@@ -126,7 +132,7 @@ def main():
     def autolabel(ax,rects):
         for rect in rects:
             height=rect.get_height()
-            ax.annotate('{:.3f}'.format(height),
+            ax.annotate('{:.2f}'.format(height),
             xy=(rect.get_x()+rect.get_width()/2,height),
             xytext=(0,0.5), textcoords="offset points",
             ha='center', va='bottom',color='red',fontsize=ann_fnt)
