@@ -124,7 +124,7 @@ def main():
     def autolabel(ax,rects):
         for rect in rects:
             height=rect.get_height()
-            ax.annotate('{:.4f}'.format(height),
+            ax.annotate('{:.3f}'.format(height),
             xy=(rect.get_x()+rect.get_width()/2,height),
             xytext=(0,0.5), textcoords="offset points",
             ha='center', va='bottom',color='red',fontsize=ann_fnt)
