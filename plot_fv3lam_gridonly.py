@@ -56,7 +56,7 @@ fnm_in_grid='grid.tile7.halo4.nc'
 out_grd_title='FV3LAM::grid'
 out_grd_fname='fv3lam_grid_only'
 
-# Colormap range option flag ('symmetry','roudn','real','fixed')
+# Colormap range option flag ('symmetry','round','real','fixed')
 cmap_range_grd='round'
 
 # Resolution of background natural earth data ('10m' or '50m' or '110m')
