@@ -15,6 +15,7 @@
 ## V007: 2020/06/22: Chan-Hoo Jeon : Add opt. for machine-specific arguments
 ## V008: 2020/06/29: Chan-Hoo Jeon : Modify grid_dxy_plot to use area for GFDL/ESG
 ## V009: 2021/03/04: Chan-Hoo Jeon : Simplify the script
+## V010: 2021/06/24: Chan-Hoo Jeon : Add a projection for RRFS_NA domain
 ###################################################################### CHJ #####
 
 import os, sys
@@ -55,7 +56,10 @@ plt.switch_backend('agg')
 
 # Case-dependent input =============================================== CHJ =====
 # Path to the directory where the grid file is located.
-dnm_data="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/expt_dirs/test_community/2020122700/INPUT/"
+#dnm_data="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/expt_dirs/test_community/2020122700/INPUT/"
+
+dnm_data="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/ufs_srw_app/srw_dev_test/expt_dirs/grid_RRFS_NA_13km/2019070100/INPUT"
+#dnm_data="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/ufs_srw_app/srw_dev_test/expt_dirs/grid_RRFS_NA_13km_GFDL/2019070100/INPUT"
 
 # path to the orography file
 dnm_orog=dnm_data
@@ -69,13 +73,17 @@ fnm_in_orog='oro_data.tile7.halo4.nc'
 # Grid point plot (every 'n_skip' rows/columns)
 n_skip=30
 
+# Domain name
+domain_nm='RRFS_NA_13km'
+#domain_nm='RRFS_NA_13km_GFDL'
+
 # Bases of output title and file names
 # Grid
-out_grd_title='FV3LAM::grid'
-out_grd_fname='fv3lam_grid'
+out_grd_title='FV3LAM::grid::'+domain_nm
+out_grd_fname='fv3lam_grid_'+domain_nm
 # Orography
-out_orog_title_base='FV3LAM::orography::'
-out_orog_fname_base='fv3lam_orog'
+out_orog_title_base='FV3LAM::orography::'+domain_nm
+out_orog_fname_base='fv3lam_orog_'+domain_nm
 
 # orography variables:
 #orog_vars=["slmsk","land_frac","orog_raw","orog_filt","stddev","convexity",
@@ -84,7 +92,7 @@ out_orog_fname_base='fv3lam_orog'
 orog_vars=["orog_filt"]
 
 # Color-map range option flag ('symmetry','round','real','fixed')
-cmap_range_grd='round'
+cmap_range_grd='fixed'
 
 # Resolution of background natural earth data ('10m' or '50m' or '110m')
 back_res='50m'
@@ -155,7 +163,7 @@ def orog_var_plot(oro_f,ovar):
 # ==================================================================== CHJ =====
 
     # Orography: output title and file name
-    out_orog_title=out_orog_title_base+ovar
+    out_orog_title=out_orog_title_base+"::"+ovar
     out_orog_fname=out_orog_fname_base+"_"+ovar
 
 
@@ -225,10 +233,15 @@ def orog_var_plot(oro_f,ovar):
     else:
         sys.exit('ERROR: wrong ovar !!!!!')
 
+    print(domain_nm[:7])
 
-    # Plot field
-    fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
-    ax.set_extent(extent, ccrs.PlateCarree())
+    if domain_nm[:7]=='RRFS_NA':
+        fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Orthographic(
+                            central_longitude=-107,central_latitude=53)))
+    else:
+        fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
+        ax.set_extent(extent, ccrs.PlateCarree())
+
     # Call background plot
     back_plot(ax)
     ax.set_title(out_orog_title,fontsize=9)
@@ -309,8 +322,19 @@ def grid_super_oro_plot(lon_min,lat_min):
     orox_slc=oro_x[::n_skip,::n_skip]
     oroy_slc=oro_y[::n_skip,::n_skip]
 
-    fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
-    ax.set_extent(extent, ccrs.PlateCarree())
+    if domain_nm[:7]=='RRFS_NA':
+        fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Orthographic(
+                            central_longitude=-107,central_latitude=53)))    
+        ref_lon=-133.5
+        ref_lat=lat_min-5.5
+        lgd_loc='lower left'
+    else:
+        fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
+        ax.set_extent(extent, ccrs.PlateCarree())
+        ref_lon=lon_min-3
+        ref_lat=lat_min-3
+        lgd_loc='lower right'
+
     ax.set_title(out_grd_title, fontsize=9)
 
     # Call background plot
@@ -323,8 +347,8 @@ def grid_super_oro_plot(lon_min,lat_min):
     s2=ax.scatter(orox_slc,oroy_slc,transform=ccrs.PlateCarree(),marker='*',facecolors='green',edgecolors='green',linewidth=0.3,s=sp_scale,zorder=4)
 
     ref_txt='Super-: every '+str(n_skip)+' (i,j)s from (2,2), Oro-: every '+str(n_skip)+' (i,j)s'
-    plt.text(lon_min-3,lat_min-3,ref_txt,transform=ccrs.Geodetic(),fontsize=8)
-    plt.legend((s1,s2),('super-grid','oro-grid'),scatterpoints=1,loc='lower right',ncol=1,fontsize=8) 
+    plt.text(ref_lon,ref_lat,ref_txt,transform=ccrs.Geodetic(),fontsize=8)
+    plt.legend((s1,s2),('super-grid','oro-grid'),scatterpoints=1,loc=lgd_loc,ncol=1,fontsize=8) 
 
     # Output figure
     ndpi=300
@@ -376,8 +400,8 @@ def grid_dxy_plot(grd_area,lon_min,lat_min):
         cs_max=fmax
         cs_avg=favg
     elif cmap_range_grd=='fixed':
-        cs_min=2.7
-        cs_max=3.2
+        cs_min=10.0
+        cs_max=15.0
         cs_avg=round(favg,n_rnd)
     else:
         sys.exit('ERROR: wrong colormap-range flag !!!')
@@ -388,14 +412,23 @@ def grid_dxy_plot(grd_area,lon_min,lat_min):
 
 
     nm_svar='Cell size (km)'
-    cs_cmap='nipy_spectral_r'
+#    cs_cmap='nipy_spectral_r'
+    cs_cmap='gist_rainbow'
     lb_ext='neither'
     tick_ln=1.5
     tick_wd=0.45
     tlb_sz=3
 
-    fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
-    ax.set_extent(extent, ccrs.PlateCarree())
+    if domain_nm[:7]=='RRFS_NA':
+        fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Orthographic(
+                            central_longitude=-107,central_latitude=53)))
+        ref_lon=-133.5
+        ref_lat=lat_min-5.5
+    else:
+        fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
+        ax.set_extent(extent, ccrs.PlateCarree())
+        ref_lon=lon_min
+        ref_lat=lat_min-4
 
     out_grd_dx_title=out_grd_title+'::Cell Size'
     ax.set_title(out_grd_dx_title, fontsize=9)
@@ -407,8 +440,8 @@ def grid_dxy_plot(grd_area,lon_min,lat_min):
               vmin=cs_min,vmax=cs_max,transform=ccrs.PlateCarree())
 
     ref_txt='Max='+str(round(fmax,2))+', Min='+str(round(fmin,2))+', Avg='+str(round(favg,2))
-    plt.text(lon_min-2,lat_min-2,ref_txt,horizontalalignment='left',
-             transform=ccrs.Geodetic(),fontsize=9)
+    plt.text(ref_lon,ref_lat,ref_txt,horizontalalignment='left',
+             transform=ccrs.Geodetic(),fontsize=7)
 
     divider=make_axes_locatable(ax)
     ax_cb=divider.new_horizontal(size="3%",pad=0.1,axes_class=plt.Axes)
@@ -443,9 +476,17 @@ def grid_bndr_plot(nxp,nyp):
     grd_BxR_lon=grd_x[-1,:]
     grd_BxR_lat=grd_y[-1,:]
 
-    fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
-    ax.set_extent(extent, ccrs.PlateCarree())
- 
+    if domain_nm[:7]=='RRFS_NA':
+        fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Orthographic(
+                            central_longitude=-107,central_latitude=53)))
+        txt_sp_lon=5  #0
+        txt_sp_lat=3  #7
+    else:
+        fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
+        ax.set_extent(extent, ccrs.PlateCarree())
+        txt_sp_lon=1
+        txt_sp_lat=1
+
     out_grd_bndr_title=out_grd_title+'::Boundary'
     ax.set_title(out_grd_bndr_title, fontsize=9)
 
@@ -461,18 +502,18 @@ def grid_bndr_plot(nxp,nyp):
     # Add text to each boundary
     tsize=9
     ntxt=int(nyp/2)
-    txt_x=grd_B1C_lon[ntxt]+1
-    txt_y=grd_B1C_lat[ntxt]-1
+    txt_x=grd_B1C_lon[ntxt]+txt_sp_lon
+    txt_y=grd_B1C_lat[ntxt]-txt_sp_lat
     ax.text(txt_x,txt_y,'B1C',color='red',fontsize=tsize,transform=ccrs.PlateCarree())
-    txt_x=grd_BxC_lon[ntxt]+1
-    txt_y=grd_BxC_lat[ntxt]+1
+    txt_x=grd_BxC_lon[ntxt]+txt_sp_lon
+    txt_y=grd_BxC_lat[ntxt]+txt_sp_lat
     ax.text(txt_x,txt_y,'BxC',color='purple',fontsize=tsize,transform=ccrs.PlateCarree())
     ntxt=int(nxp/2)
     txt_x=grd_B1R_lon[ntxt]
-    txt_y=grd_B1R_lat[ntxt]+1
+    txt_y=grd_B1R_lat[ntxt]+txt_sp_lat
     ax.text(txt_x,txt_y,'B1R',color='blue',fontsize=tsize,transform=ccrs.PlateCarree())
     txt_x=grd_BxR_lon[ntxt]
-    txt_y=grd_BxR_lat[ntxt]+1
+    txt_y=grd_BxR_lat[ntxt]-txt_sp_lat-1
     ax.text(txt_x,txt_y,'BxR',color='green',fontsize=tsize,transform=ccrs.PlateCarree())
  
     # File name

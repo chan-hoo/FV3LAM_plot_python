@@ -8,6 +8,7 @@
 ## V000: 2020/05/07: Chan-Hoo Jeon : Preliminary version
 ## V001: 2020/06/22: Chan-Hoo Jeon : Add opt. for machine-specific arguments
 ## V002: 2021/03/05: Chan-Hoo Jeon : Simplify the script
+## V003: 2021/06/24: Chan-Hoo Jeon : Add a projection for RRFS_NA domain
 ###################################################################### CHJ #####
 
 import os, sys
@@ -47,7 +48,10 @@ plt.switch_backend('agg')
 
 # Case-dependent input =============================================== CHJ =====
 # Path to the directory where the input NetCDF file is located.
-dnm_out="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/expt_dirs/test_community/2020122700/"
+dnm_data="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/ufs_srw_app/srw_dev_test/expt_dirs/grid_RRFS_NA_13km/2019070100/"
+
+# Domain name
+domain_nm='RRFS_NA_13km'
 
 # grid file name
 fnm_hr='f003'
@@ -81,8 +85,8 @@ fnm_input='phy'+fnm_hr+'.nc'
 vars_phy=["tmpsfc"]
 
 # basic forms of title and file name
-out_title_base='FV3LAM::PHY::'
-out_fname_base='fv3lam_out_phy_'
+out_title_base='FV3LAM::PHY::'+domain_nm+'::'
+out_fname_base='fv3lam_out_phy_'+domain_nm+'_'
 
 # Resolution of background natural earth data ('10m' or '50m' or '110m')
 back_res='50m'
@@ -97,7 +101,7 @@ def main():
 
     print(' ===== OUTPUT: phy =======================================')
     # open the data file
-    fname=os.path.join(dnm_out,fnm_input)
+    fname=os.path.join(dnm_data,fnm_input)
     try: phyf=xr.open_mfdataset(fname,**mfdt_kwargs)
     except: raise Exception('Could NOT find the file',fname)
     print(phyf)
@@ -146,191 +150,10 @@ def phy_plot(svar):
     tick_ln=1.5
     tick_wd=0.45
     tlb_sz=3
-    n_rnd=5
+    n_rnd=2
     cmap_range='round'
  
-    if svar=="acond":
-        nm_svar='Aerodynamic conductance'
-        n_rnd=3
-    elif svar=="albdo_ave":
-        nm_svar='Albedo:average'
-        n_rnd=2
-    elif svar=="alnsf":
-        nm_svar='Near-IR black sky albedo'
-        cs_cmap='YlGnBu'
-        n_rnd=3
-    elif svar=="alnwf":
-        nm_svar='Near-IR white sky albedo'
-        cs_cmap='YlOrRd'
-        n_rnd=3
-    elif svar=="alvsf":
-        nm_svar='Visible black sky albedo'
-        cs_cmap='YlGnBu'
-        n_rnd=3
-    elif svar=="alvwf":
-        nm_svar='Visible white sky albedo'
-        cs_cmap='YlOrRd'
-        n_rnd=3
-    elif svar=="cduvb_ave":
-        nm_svar='Clear sky UV-B solar flux'
-        n_rnd=2
-    elif svar=="cnwat":
-        nm_svar='Canopy moisture content'
-        n_rnd=2
-    elif svar=="cpofp":
-        nm_svar='Percent of frozen precipitation'
-        n_rnd=2
-    elif svar=="cprat_ave":
-        nm_svar='Convective precipitatin'
-        n_rnd=5
-    elif svar=="cpratb_ave":
-        n_rnd=5
-    elif svar=="csdlf":
-        nm_svar='Clear sky downward long wave flux'
-        n_rnd=2
-    elif svar=="csdsf":
-        nm_svar='Clear sky downward solar flux'
-        n_rnd=2
-    elif svar=="csulf":
-        nm_svar='Clear sky upward long wave flux'
-        n_rnd=2
-    elif svar=="csulftoa":
-        nm_svar='csulf: top of atmos.'
-        n_rnd=2
-    elif svar=="csusf":
-        nm_svar='Clear sky upward solar flux'
-        n_rnd=2
-    elif svar=="csusftoa":
-        nm_svar='csusf: top of atmos.'
-        n_rnd=2
-    elif svar=="cwork_aveclm":
-        nm_svar='Cloud work function'
-        n_rnd=2
-    elif svar=="dlwrf":
-        nm_svar='Downward long wave rad. flux'
-        n_rnd=2
-    elif svar=="dlwrf_ave":
-        nm_svar='dlwrf: average'
-        n_rnd=2
-    elif svar=="dswrf":
-        nm_svar='Downward short wave rad. flux'
-        n_rnd=2
-    elif svar=="dswrf_ave":
-        nm_svar='dswrf: average'
-        n_rnd=2
-    elif svar=="dswrf_avetoa":
-        nm_svar='dswrf:average:top of atmos'
-        n_rnd=2
-    elif svar=="duvb_ave":
-        nm_svar='UV-B downward solar flux'
-        n_rnd=2
-    elif svar=="evbs_ave":
-        nm_svar='Direct evaporation from bair soil'
-        n_rnd=2
-    elif svar=="evcw_ave":
-        nm_svar='Canopy water evaporation'
-        n_rnd=2
-    elif svar=="f10m":
-        nm_svar='10m wind speed over lowest value'
-        n_rnd=2
-    elif svar=="facsf":
-        nm_svar='Fract. coverage w/ strong cosz'
-        n_rnd=2
-    elif svar=="facwf":  
-        nm_svar='fract. coverage w/ weak cosz'
-        n_rnd=2
-    elif svar=="ffhh":
-        nm_svar='Surface exchange coeff. for heat'
-        n_rnd=2
-    elif svar=="ffmm":
-        nm_svar='Surface exchange coeff. for momentum'
-        n_rnd=2
-    elif svar=="fldcp":
-        nm_svar='Field capacity fraction'
-        n_rnd=2
-    elif svar=="fricv":
-        nm_svar='Friction velocity'
-        n_rnd=3
-    elif svar=="gflux":
-        nm_svar='Ground heat flux'
-        n_rnd=2
-    elif svar=="gflux_ave":
-        nm_svar='Ground heat flud: average'
-        n_rnd=2
-    elif svar=="hgt_hyblev1":
-        nm_svar='Height of hybrid level 1'
-        n_rnd=2
-    elif svar=="hpbl":
-        nm_svar='Planetary boundary layer height'
-        n_rnd=2
-    elif svar=="icec":
-        nm_svar='Sea-ice fraction'
-        n_rnd=1
-    elif svar=="icetk":
-        nm_svar='Sea-ice depth'
-        n_rnd=2
-    elif svar=="land":
-        nm_svar='Land cover'
-        cs_cmap=plt.cm.get_cmap('Paired',3)
-        n_rnd=0
-    elif svar=="lhtfl":
-        nm_svar='Latent heat net flux'
-        n_rnd=2
-    elif svar=="lhtfl_ave":
-        nm_svar='Latent heat net flux:avg'
-        n_rnd=2
-    elif svar=="nbdsf_ave":
-        nm_svar='Near IR diffuse dw. solar flux'
-        n_rnd=2
-    elif svar=="nddsf_ave":
-        n_rnd=2
-    elif svar=="orog":
-        nm_svar='Surface altitude'
-        cs_cmap='terrain_r'
-        n_rnd=2
-    elif svar=="pevpr":
-        nm_svar='Potential evaporation rate'
-        n_rnd=2
-    elif svar=="pevpr_ave":
-        nm_svar='Potential evaporation rate:avg'
-        n_rnd=2
-    elif svar=="prate_ave":
-        n_rnd=4
-    elif svar=="prateb_ave":
-        n_rnd=5
-    elif svar=="pressfc":
-        nm_svar='Surface pressure'
-        n_rnd=2
-    elif svar=="pwatclm":
-        nm_svar='Precipitable water'
-        n_rnd=2
-    elif svar=="rh02max":
-        n_rnd=3
-    elif svar=="rh02min":
-        n_rnd=3
-    elif svar=="sbsno_ave":
-        nm_svar='Sublimation'
-        n_rnd=2
-    elif svar=="sfcr":
-        nm_svar='Roughness length'
-        cs_cmap='gist_earth_r'
-        n_rnd=2
-    elif svar=="sfexc":
-        nm_svar='Exchange coefficient'
-        n_rnd=2
-    elif svar=="shdmax":
-        nm_svar='Maximum areal fractional coverage'
-        n_rnd=2
-    elif svar=="shdmin":
-        nm_svar='Minimum areal fractional coverage'
-        n_rnd=2
-    elif svar=="shtfl":
-        nm_svar='Sensible heat flux'
-        n_rnd=2
-    elif svar=="shtfl_ave":
-        nm_svar='Sensible heat flux: average'
-        n_rnd=2
-    elif svar=="sltyp":
+    if svar=="sltyp":
         nm_svar='Surface slope type'
         cs_cmap=plt.cm.get_cmap('Paired',10)
         n_rnd=0
@@ -338,117 +161,13 @@ def phy_plot(svar):
         nm_svar='Max. snow albedo over land'
         cs_cmap='nipy_spectral_r'
         n_rnd=2
-    elif svar=="snod":
-        nm_svar='Physical snow depth'
-        n_rnd=2
-    elif svar=="snohf":
-        nm_svar='Snow phase-change heat flux'
-        n_rnd=2
-    elif svar=="snowc_ave":
-        nm_svar='Snow cover: average'
-        n_rnd=1
-    elif svar=="soill1":
-        nm_svar='Vol. fract. of unfrozen soil moist. 1'
-        n_rnd=3
-    elif svar=="soill2":
-        nm_svar='Vol. fract. of unfrozen soil moist. 2'
-        n_rnd=3
-    elif svar=="soill3":
-        nm_svar='Vol. fract. of unfrozen soil moist. 3'
-        n_rnd=3
-    elif svar=="soill4":
-        nm_svar='Vol. fract. of unfrozen soil moist. 4'
-        n_rnd=3
-    elif svar=="soilm":
-        nm_svar='Soil moisture content'
-        n_rnd=2
-    elif svar=="soilt1":
-        nm_svar='Soil column temperature 1'
-        n_rnd=2
-    elif svar=="soilt2":
-        nm_svar='Soil column temperature 2'
-        n_rnd=2
-    elif svar=="soilt3":
-        nm_svar='Soil column temperature 3'
-        n_rnd=2
-    elif svar=="soilt4":
-        nm_svar='Soil column temperature 4'
-        n_rnd=2
-    elif svar=="soilw1":
-        nm_svar='Total volumetric soil moisture 1'
-        n_rnd=2
-    elif svar=="soilw2":
-        nm_svar='Total volumetric soil moisture 2'
-        n_rnd=2
-    elif svar=="soilw3":
-        nm_svar='Total volumetric soil moisture 3'
-        n_rnd=2
-    elif svar=="soilw4":
-        nm_svar='Total volumetric soil moisture 4'
-        n_rnd=2
     elif svar=="sotyp":
         nm_svar='Soil type'
         cs_cmap=plt.cm.get_cmap('tab20',17)
         n_rnd=0
-    elif svar=="spd10max":
-        nm_svar='10m current speed'
-        n_rnd=2
-    elif svar=="spfh2m":
-        nm_svar='2m specific humidity'
-        n_rnd=3
-    elif svar=="spfh_hyblev1":
-        nm_svar='Specific humidity of hybrid level 1'
-        n_rnd=3
-    elif svar=="spfhmax_max2m":
-        n_rnd=3
-    elif svar=="spfhmin_min2m":
-        n_rnd=3
-    elif svar=="ssrun_acc":
-        nm_svar='Storm surface runoff'
-        n_rnd=2
-    elif svar=="sunsd_acc":
-        nm_svar='Sunshine duration'
-        n_rnd=1
-    elif svar=="t02max":
-        nm_svar='Max. of 2m temperature'
-        n_rnd=2
-    elif svar=="t02min":
-        nm_svar='Min. of 2m temperature'
-        n_rnd=2
-    elif svar=="tg3":
-        nm_svar='Deep soil temperature'
-        n_rnd=2
-    elif svar=="tisfc":
-        nm_svar='Sea-ice surface temperature'
-        n_rnd=2
-    elif svar=="tmax_max2m":
-        n_rnd=2
-    elif svar=="tmin_min2m":
-        n_rnd=2
-    elif svar=="tmp2m":
-        nm_svar='2m temperatue'
-        n_rnd=2
-    elif svar=="tmpsfc":
-        nm_svar='Sea surface temperature'
-        n_rnd=2
     elif svar=="tprcp":
         nm_svar='Precipitation rate'
         n_rnd=4
-    elif svar=="trans_ave":
-        nm_svar='Transpiration'
-        n_rnd=2
-    elif svar=="u-gwd_ave":
-        nm_svar='Zonal flux of gravity wave stress'
-        n_rnd=2
-    elif svar=="u10max":
-        nm_svar='Max. of u-comp. of 10m wind'
-        n_rnd=2
-    elif svar=="uflx":
-        nm_svar='u-comp. of momentum flux'
-        n_rnd=2
-    elif svar=="uflx_ave":
-        nm_svar='u-comp. of momentum flux:avg'
-        n_rnd=2
     elif svar=="ugrd10m":
         nm_svar='u-comp. of 10m wind'
         n_rnd=2
@@ -461,45 +180,6 @@ def phy_plot(svar):
         cmap_range='symmetry'
         lb_ext='both'
         cs_cmap='seismic'
-    elif svar=="ulwrf":
-        nm_svar='Upward long wave rad. flux'
-        n_rnd=2
-    elif svar=="ulwrf_ave":
-        nm_svar='Upward long wave rad. flux:avg'
-        n_rnd=2
-    elif svar=="ulwrf_avetoa":
-        nm_svar='ulwrf:avg at top of atmos.'
-        n_rnd=2
-    elif svar=="uswrf":
-        nm_svar='Upward short wave rad. flux'
-        n_rnd=2
-    elif svar=="uswrf_ave":
-        nm_svar='Upward short wave rad. flux:avg'
-        n_rnd=2
-    elif svar=="uswrf_avetoa":
-        nm_svar='uswrf:avg at top of atmos.'
-        n_rnd=2
-    elif svar=="v-gwd_ave":
-        nm_svar='Meridional flux of gravity wave stress'
-        n_rnd=2
-    elif svar=="v10max":
-        nm_svar='Max. of v-comp. of 10m wind'
-        n_rnd=2
-    elif svar=="vbdsf_ave":
-        nm_svar='Visible beam downward solar flux'
-        n_rnd=2
-    elif svar=="vddsf_ave":
-        nm_svar='Visible diffuse downward solar flux'
-        n_rnd=2
-    elif svar=="veg":
-        nm_svar='Vegetation'
-        n_rnd=2
-    elif svar=="vflx":
-        nm_svar='v-comp. of momentum flux'
-        n_rnd=2
-    elif svar=="vflx_ave":
-        nm_svar='v-comp. of momentum flux:avg'
-        n_rnd=2
     elif svar=="vgrd10m":
         nm_svar='v-comp. of 10m wind'
         n_rnd=2
@@ -516,17 +196,7 @@ def phy_plot(svar):
         nm_svar='Vegetation type'
         cs_cmap=plt.cm.get_cmap('tab20',20)
         n_rnd=0
-    elif svar=="watr_acc":
-        nm_svar='Water runoff'
-        n_rnd=2
-    elif svar=="weasd":
-        nm_svar='Snow-liquid equivalent'
-        n_rnd=1
-    elif svar=="wilt":
-        nm_svar='Wilting point fraction'
-        n_rnd=2
-    else:
-        sys.exit('ERROR: wrong svar !!!')
+
 
     if svar=="tmp2m":
         sfld2d=(sfld2d-273.15)*1.8+32.0
@@ -563,9 +233,13 @@ def phy_plot(svar):
 
 
     # Plot field
-    fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
-    ax.set_extent(extent, ccrs.PlateCarree())
-    # Call background plot
+    if domain_nm[:7]=='RRFS_NA':
+        fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Orthographic(
+                            central_longitude=-107,central_latitude=53)))
+    else:
+        fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
+        ax.set_extent(extent, ccrs.PlateCarree())
+
     back_plot(ax)
     ax.set_title(out_title_fld,fontsize=9)
     cs=ax.pcolormesh(lon,lat,sfld2d,cmap=cs_cmap,rasterized=True,
@@ -574,8 +248,8 @@ def phy_plot(svar):
     ax_cb=divider.new_horizontal(size="3%",pad=0.1,axes_class=plt.Axes)
     fig.add_axes(ax_cb)
     cbar=plt.colorbar(cs,cax=ax_cb,extend=lb_ext)
-    cbar.ax.tick_params(labelsize=8)
-    cbar.set_label(nm_svar,fontsize=8)
+    cbar.ax.tick_params(labelsize=6)
+    cbar.set_label(nm_svar,fontsize=6)
 
     # Output figure
     ndpi=300

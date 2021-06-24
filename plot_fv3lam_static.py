@@ -13,6 +13,7 @@
 ## V005: 2020/04/07: Chan-Hoo Jeon : Add refine ratio to output titles
 ## V006: 2020/06/22: Chan-Hoo Jeon : Add opt. for machine-specific arguments
 ## V007: 2021/03/04: Chan-Hoo Jeon : Simplify the script
+## V008: 2021/06/24: Chan-Hoo Jeon : Add a projection for RRFS-NA domain
 ###################################################################### CHJ #####
 
 import os, sys
@@ -56,16 +57,19 @@ plt.switch_backend('agg')
 
 # Case-dependent parameters  ========================================= CHJ =====
 # Path to the directory where the input NetCDF files are located.
-dnm_data="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/expt_dirs/test_community/sfc_climo/"
+dnm_data="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/ufs_srw_app/srw_dev_test/expt_dirs/grid_RRFS_NA_13km/sfc_climo/"
 
 # Path to the orography file
-oro_path="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/expt_dirs/test_community/2020122700/INPUT/"
+oro_path="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/ufs_srw_app/srw_dev_test/expt_dirs/grid_RRFS_NA_13km/2019070100/INPUT/"
 
 # Basic form of Input NetCDF file names: res+static+basic form
 fnm_in_base='.tile7.halo4.nc' # for halo4
 
 # Grid resolution ('C96'/'C768'):
-res='C403'
+res='C819'
+
+# Domain name
+domain_nm='RRFS_NA_13km'
 
 # Orography data file (w/ halo0 or halo4) for coordinates
 fnm_in_orog='oro_data.tile7.halo4.nc'  # for halo4
@@ -85,10 +89,10 @@ fnm_in_orog='oro_data.tile7.halo4.nc'  # for halo4
 vars_static=["substrate_temperature","vegetation_greenness"]
 
 # basic forms of title and file name: base+static field name
-out_title_base='FV3LAM::Static (FIX)::'
-out_fname_base='fv3lam_static_'
+out_title_base=domain_nm+'::'
+out_fname_base='fv3lam_static_'+domain_nm+'_'
 
-out_title_base_g='FV3LAM::FIX::Original::'
+out_title_base_g='Original::'
 
 # Resolution of background natural earth data ('50m' or '110m')
 back_res='50m'
@@ -306,12 +310,17 @@ def static_plot_sub(svar,sfld,sfld_g,glon_g,glat_g):
             out_sfld_fname=out_fname_base+svar+'_'+mon_nm
 
         # Plot field
-        fig,(ax1,ax2)=plt.subplots(2,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
+        if domain_nm[:7]=='RRFS_NA':
+            fig,(ax1,ax2)=plt.subplots(2,1,subplot_kw=dict(projection=ccrs.Orthographic(
+                            central_longitude=-107,central_latitude=53)))
+        else:
+            fig,(ax1,ax2)=plt.subplots(2,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
+            ax1.set_extent(extent, ccrs.PlateCarree())
+            ax2.set_extent(extent, ccrs.PlateCarree())
+
         # Plot 1: original global data
-        ax1.set_extent(extent, ccrs.PlateCarree())
-        # Call background plot
         back_plot(ax1)
-        ax1.set_title(out_title_fld_g,fontsize=9)
+        ax1.set_title(out_title_fld_g,fontsize=8)
         cs=ax1.pcolormesh(glon_g,glat_g,sfld2d_g,cmap=svar_cmap,
               rasterized=True,vmin=svar_vmin,vmax=svar_vmax,
               transform=ccrs.PlateCarree())
@@ -320,14 +329,12 @@ def static_plot_sub(svar,sfld,sfld_g,glon_g,glat_g):
         ax_cb=divider.new_horizontal(size="3%",pad=0.1,axes_class=plt.Axes)
         fig.add_axes(ax_cb)
         cbar=plt.colorbar(cs,cax=ax_cb,extend=lb_extend,ticks=svar_tick)
-        cbar.ax.tick_params(labelsize=8)
-        cbar.set_label(svar,fontsize=8)
+        cbar.ax.tick_params(labelsize=6)
+        cbar.set_label(svar,fontsize=6)
 
         # Plot 2: regional data
-        ax2.set_extent(extent, ccrs.PlateCarree())
-        # Call background plot
         back_plot(ax2)
-        ax2.set_title(out_title_fld,fontsize=9)
+        ax2.set_title(out_title_fld,fontsize=8)
         cs=ax2.pcolormesh(glon,glat,sfld2d,cmap=svar_cmap,rasterized=True,
               vmin=svar_vmin,vmax=svar_vmax,transform=ccrs.PlateCarree())
         # extend(pointed end): 'neither'|'both'|'min'|'max'  
@@ -335,8 +342,8 @@ def static_plot_sub(svar,sfld,sfld_g,glon_g,glat_g):
         ax_cb=divider.new_horizontal(size="3%",pad=0.1,axes_class=plt.Axes)
         fig.add_axes(ax_cb)
         cbar=plt.colorbar(cs,cax=ax_cb,extend=lb_extend,ticks=svar_tick)
-        cbar.ax.tick_params(labelsize=8)
-        cbar.set_label(svar,fontsize=8)
+        cbar.ax.tick_params(labelsize=6)
+        cbar.set_label(svar,fontsize=6)
 
 
         # Output figure

@@ -8,6 +8,7 @@
 ## V000: 2020/05/06: Chan-Hoo Jeon : Preliminary version
 ## V001: 2020/06/22: Chan-Hoo Jeon : Add opt. for machine-specific arguments
 ## V002: 2021/03/05: Chan-Hoo Jeon : Simplify the script
+## V003: 2021/06/24: Chan-Hoo Jeon : Add a projection for RRFS_NA domain
 ###################################################################### CHJ #####
 
 import os, sys
@@ -49,7 +50,10 @@ plt.switch_backend('agg')
 # Case-dependent input =============================================== CHJ =====
 
 # Path to the directory where the input NetCDF file is located.
-dnm_out="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/expt_dirs/test_community/2020122700/"
+dnm_data="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/ufs_srw_app/srw_dev_test/expt_dirs/grid_RRFS_NA_13km/2019070100"
+
+# Domain name
+domain_nm='RRFS_NA_13km'
 
 # grid file name
 fnm_hr='f003'
@@ -59,19 +63,19 @@ fnm_input='dyn'+fnm_hr+'.nc'
 # Variables
 #vars_dyn=["cld_amt","clwmr","delz","dnvvelmax","dpres"]
 #vars_dyn=["dzdt","grle","hgtsfc","icmr"]
-#vars_dyn=["maxvort01","maxvort02","maxvorthy1"]
+#vars_dyn=["maxvort01"]
 #vars_dyn=["o3mr","pressfc","rwmr","snmr"]
-#vars_dyn=["spfh","srh01","srh03","tmp"]
+vars_dyn=["tmp"]
 #vars_dyn=["uhmax03","uhmax25","uhmin03","uhmin25","upvvelmax"]
 #vars_dyn=["ugrd","vgrd"]
-vars_dyn=["hgtsfc"]
+#vars_dyn=["hgtsfc"]
 
 # Vertical layer number (3d only)
 lvl=1
 
 # basic forms of title and file name
-out_title_base='FV3LAM::DYN::'
-out_fname_base='fv3lam_out_dyn_'
+out_title_base='FV3LAM::DYN::'+domain_nm+'::'
+out_fname_base='fv3lam_out_dyn_'+domain_nm+'_'
 
 # Resolution of background natural earth data ('10m' or '50m' or '110m')
 back_res='50m'
@@ -85,7 +89,7 @@ def main():
 
     print(' ===== OUTPUT: dyn =======================================')
     # open the data file
-    fname=os.path.join(dnm_out,fnm_input)
+    fname=os.path.join(dnm_data,fnm_input)
     try: dynf=xr.open_mfdataset(fname,**mfdt_kwargs)
     except: raise Exception('Could NOT find the file',fname)
     print(dynf)
@@ -149,7 +153,7 @@ def dyn_plot(svar):
     tick_ln=1.5
     tick_wd=0.45
     tlb_sz=3
-    n_rnd=5
+    n_rnd=2
     cmap_range='round'
  
     if svar=="cld_amt":
@@ -158,15 +162,6 @@ def dyn_plot(svar):
     elif svar=="clwmr":
         nm_svar='Cloud-water mixing ratio'
         n_rnd=5
-    elif svar=="delz":
-        n_rnd=2
-    elif svar=="dnvvelmax":
-        n_rnd=2
-    elif svar=="dpres":
-        n_rnd=2
-    elif svar=="dzdt":
-        nm_svar='Vertical velocity'
-        n_rnd=2
     elif svar=="grle":
         nm_svar='Graupel mixing ratio'
         n_rnd=5
@@ -205,43 +200,18 @@ def dyn_plot(svar):
     elif svar=="tmp":
         nm_svar='Temperature'
         n_rnd=1
-    elif svar=="ugrd":
-        nm_svar='u-comp. of zonal wind'
-        n_rnd=2
-    #    cmap_range='symmetry'
-        lb_ext='both'
-    #    cs_cmap='seismic'
-    elif svar=="uhmax03":
-        n_rnd=2
-    elif svar=="uhmax25":
-        n_rnd=2
-    elif svar=="uhmin03":
-        n_rnd=2
-    elif svar=="uhmin25":
-        n_rnd=2
-    elif svar=="upvvelmax":
-        n_rnd=2
     elif svar=="ustm":
         nm_svar='u-comp. of storm motion'
         n_rnd=2
         cmap_range='symmetry'
         lb_ext='both'
         cs_cmap='seismic'
-    elif svar=="vgrd":
-        nm_svar='v-comp. of meridional wind'
-        n_rnd=2
-    #    cmap_range='symmetry'
-        lb_ext='both'
-    #    cs_cmap='seismic'
     elif svar=="vstm":  
         nm_svar='v-comp. of storm motion'
         n_rnd=2
         cmap_range='symmetry'
         lb_ext='both'
         cs_cmap='seismic'
-    else:
-        sys.exit('ERROR: wrong svar !!!')
-
 
     print(' DYN field=',nm_svar)
 
@@ -274,9 +244,13 @@ def dyn_plot(svar):
 
 
     # Plot field
-    fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
-    ax.set_extent(extent, ccrs.PlateCarree())
-    # Call background plot
+    if domain_nm[:7]=='RRFS_NA':
+        fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Orthographic(
+                            central_longitude=-107,central_latitude=53)))
+    else:
+        fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
+        ax.set_extent(extent, ccrs.PlateCarree())
+
     back_plot(ax)
     ax.set_title(out_title_fld,fontsize=9)
     cs=ax.pcolormesh(lon,lat,sfld2d,cmap=cs_cmap,rasterized=True,
@@ -285,8 +259,8 @@ def dyn_plot(svar):
     ax_cb=divider.new_horizontal(size="3%",pad=0.1,axes_class=plt.Axes)
     fig.add_axes(ax_cb)
     cbar=plt.colorbar(cs,cax=ax_cb,extend=lb_ext)
-    cbar.ax.tick_params(labelsize=8)
-    cbar.set_label(nm_svar,fontsize=8)
+    cbar.ax.tick_params(labelsize=6)
+    cbar.set_label(nm_svar,fontsize=6)
 
     # Output figure
     ndpi=300

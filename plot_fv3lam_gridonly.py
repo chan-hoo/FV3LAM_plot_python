@@ -7,6 +7,7 @@
 ## History ===============================
 ## V000: 2020/07/20: Chan-Hoo Jeon : Preliminary version
 ## V001: 2021/03/04: Chan-Hoo Jeon : Simplify the script
+## V002: 2021/06/23: Chan-Hoo Jeon : Add a projection for RRFS_NA domain
 ###################################################################### CHJ #####
 
 import os, sys
@@ -47,17 +48,23 @@ plt.switch_backend('agg')
 
 # Case-dependent input =============================================== CHJ =====
 # Path to the directory where the grid file is located.
-dnm_data="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/expt_dirs/test_community/2020122700/INPUT/"
+dnm_data="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/ufs_srw_app/srw_dev_test/expt_dirs/grid_RRFS_NA_13km/grid"
+#dnm_data="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/ufs_srw_app/srw_dev_test/expt_dirs/grid_RRFS_NA_13km_GFDL/grid"
 
 # Grid file
-fnm_in_grid='grid.tile7.halo4.nc'
+fnm_in_grid='C819_grid.tile7.halo4.nc'
+#fnm_in_grid='C879_grid.tile7.halo4.nc'
+
+# Domain name
+domain_nm='RRFS_NA_13km'
+#domain_nm='RRFS_NA_13km_GFDL'
 
 # output title and file names
-out_grd_title='FV3LAM::grid'
-out_grd_fname='fv3lam_grid_only'
+out_grd_title='FV3LAM::grid::'+domain_nm
+out_grd_fname='fv3lam_grid_only_'+domain_nm
 
 # Colormap range option flag ('symmetry','round','real','fixed')
-cmap_range_grd='round'
+cmap_range_grd='fixed'
 
 # Resolution of background natural earth data ('10m' or '50m' or '110m')
 back_res='50m'
@@ -185,8 +192,8 @@ def grid_dxy_plot(grd_area,lon_min,lat_min):
         cs_max=fmax
         cs_avg=favg
     elif cmap_range_grd=='fixed':
-        cs_min=2.7
-        cs_max=3.2
+        cs_min=10.0
+        cs_max=15.0
         cs_avg=round(favg,n_rnd)
     else:
         sys.exit('ERROR: wrong colormap-range flag !!!')
@@ -197,14 +204,25 @@ def grid_dxy_plot(grd_area,lon_min,lat_min):
 
 
     nm_svar='Cell size (km)'
-    cs_cmap='nipy_spectral_r'
+#    cs_cmap='nipy_spectral_r'
+    cs_cmap='gist_rainbow'
     lb_ext='neither'
     tick_ln=1.5
     tick_wd=0.45
     tlb_sz=3
 
-    fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
-    ax.set_extent(extent, ccrs.PlateCarree())
+    print(domain_nm[:7])
+
+    if domain_nm[:7]=='RRFS_NA':
+        fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Orthographic(
+                            central_longitude=-107,central_latitude=53)))
+        ref_lon=-133.5
+        ref_lat=lat_min-5.5
+    else:
+        fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
+        ax.set_extent(extent, ccrs.PlateCarree())
+        ref_lon=lon_min
+        ref_lat=lat_min-4
 
     out_grd_dx_title=out_grd_title+'::Cell Size'
     ax.set_title(out_grd_dx_title, fontsize=9)
@@ -216,8 +234,8 @@ def grid_dxy_plot(grd_area,lon_min,lat_min):
               vmin=cs_min,vmax=cs_max,transform=ccrs.PlateCarree())
 
     ref_txt='Max='+str(round(fmax,2))+', Min='+str(round(fmin,2))+', Avg='+str(round(favg,2))
-    plt.text(lon_min-2,lat_min-2,ref_txt,horizontalalignment='left',
-             transform=ccrs.Geodetic(),fontsize=9)
+    plt.text(ref_lon,ref_lat,ref_txt,horizontalalignment='left',
+             transform=ccrs.Geodetic(),fontsize=7)
 
     divider=make_axes_locatable(ax)
     ax_cb=divider.new_horizontal(size="3%",pad=0.1,axes_class=plt.Axes)
@@ -252,9 +270,17 @@ def grid_bndr_plot(nxp,nyp):
     grd_BxR_lon=grd_x[-1,:]
     grd_BxR_lat=grd_y[-1,:]
 
-    fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
-    ax.set_extent(extent, ccrs.PlateCarree())
- 
+    if domain_nm[:7]=='RRFS_NA':
+        fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Orthographic(
+                            central_longitude=-107,central_latitude=53)))
+        txt_sp_lon=5  #0
+        txt_sp_lat=3  #7
+    else:
+        fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
+        ax.set_extent(extent, ccrs.PlateCarree())
+        txt_sp_lon=1
+        txt_sp_lat=1 
+
     out_grd_bndr_title=out_grd_title+'::Boundary'
     ax.set_title(out_grd_bndr_title, fontsize=9)
 
@@ -270,18 +296,18 @@ def grid_bndr_plot(nxp,nyp):
     # Add text to each boundary
     tsize=9
     ntxt=int(nyp/2)
-    txt_x=grd_B1C_lon[ntxt]+1
-    txt_y=grd_B1C_lat[ntxt]-1
+    txt_x=grd_B1C_lon[ntxt]+txt_sp_lon
+    txt_y=grd_B1C_lat[ntxt]-txt_sp_lat
     ax.text(txt_x,txt_y,'B1C',color='red',fontsize=tsize,transform=ccrs.PlateCarree())
-    txt_x=grd_BxC_lon[ntxt]+1
-    txt_y=grd_BxC_lat[ntxt]+1
+    txt_x=grd_BxC_lon[ntxt]+txt_sp_lon
+    txt_y=grd_BxC_lat[ntxt]+txt_sp_lat
     ax.text(txt_x,txt_y,'BxC',color='purple',fontsize=tsize,transform=ccrs.PlateCarree())
     ntxt=int(nxp/2)
     txt_x=grd_B1R_lon[ntxt]
-    txt_y=grd_B1R_lat[ntxt]+1
+    txt_y=grd_B1R_lat[ntxt]+txt_sp_lat
     ax.text(txt_x,txt_y,'B1R',color='blue',fontsize=tsize,transform=ccrs.PlateCarree())
     txt_x=grd_BxR_lon[ntxt]
-    txt_y=grd_BxR_lat[ntxt]+1
+    txt_y=grd_BxR_lat[ntxt]-txt_sp_lat-1
     ax.text(txt_x,txt_y,'BxR',color='green',fontsize=tsize,transform=ccrs.PlateCarree())
  
     # File name

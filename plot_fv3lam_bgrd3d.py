@@ -9,6 +9,7 @@
 ## V001: 2020/06/22: Chan-Hoo Jeon : Add opt. for machine-specific arguments
 ## V002: 2020/07/20: Chan-Hoo Jeon : Add new cmap and background image option
 ## V003: 2021/03/05: Chan-Hoo Jeon : Simplify the script
+## V004: 2021/06/24: Chan-Hoo Jeon : Add a projection for RRFS_NA domain
 ###################################################################### CHJ #####
 
 import os, sys
@@ -47,7 +48,10 @@ plt.switch_backend('agg')
 # Case-dependent input =============================================== CHJ =====
 
 # Path to the directory where the input NetCDF files are located.
-dnm_data="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/expt_dirs/test_community/2020122700/postprd/"
+dnm_data="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/ufs_srw_app/srw_dev_test/expt_dirs/grid_RRFS_NA_13km/2019070100/postprd/"
+
+# Domain name
+domain_nm='RRFS_NA_13km'
 
 # Input file hour number
 fnm_hr='f003'
@@ -91,8 +95,8 @@ nlvl=64
 ilvl=1
 
 # basic forms of title and file name
-out_title_base='FV3LAM::BGRD3D::'+fnm_hr+'::'
-out_fname_base='fv3lam_out_bgrd3d_'+fnm_hr+'_'
+out_title_base='FV3LAM::BGRD3D::'+domain_nm+'::'+fnm_hr+'::'
+out_fname_base='fv3lam_out_bgrd3d_'+domain_nm+'_'+fnm_hr+'_'
 
 # Resolution of background natural earth data ('10m' or '50m' or '110m')
 back_res='50m'
@@ -282,9 +286,13 @@ def plot_grb2(svar):
     print(' cs_max=',cs_max)
  
     # Plot field
-    fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
-    ax.set_extent(extent, ccrs.PlateCarree())
-    # Call background plot
+    if domain_nm[:7]=='RRFS_NA':
+        fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Orthographic(
+                            central_longitude=-107,central_latitude=53)))
+    else:
+        fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
+        ax.set_extent(extent, ccrs.PlateCarree())
+
     back_plot(ax)
     ax.set_title(out_title,fontsize=9)
     cs=ax.pcolormesh(lon,lat,sval,cmap=cs_cmap,rasterized=True,
@@ -293,8 +301,8 @@ def plot_grb2(svar):
     ax_cb=divider.new_horizontal(size="3%",pad=0.1,axes_class=plt.Axes)
     fig.add_axes(ax_cb)
     cbar=plt.colorbar(cs,cax=ax_cb,extend=lb_ext)
-    cbar.ax.tick_params(labelsize=8)
-    cbar.set_label(nm_svar,fontsize=8)
+    cbar.ax.tick_params(labelsize=6)
+    cbar.set_label(nm_svar,fontsize=6)
 
     # Output figure
     ndpi=300

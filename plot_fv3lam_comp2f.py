@@ -12,6 +12,7 @@
 ## V004: 2021/03/05: Chan-Hoo Jeon : Simplify the script
 ## V005: 2021/04/09: Chan-Hoo Jeon : Add individual plots
 ## V006: 2021/04/20: Chan-Hoo Jeon : Add relative error plot
+## V007: 2021/06/24: Chan-Hoo Jeon : Add a projection for RRFS_NA domain
 ###################################################################### CHJ #####
 
 import os, sys
@@ -53,20 +54,23 @@ plt.switch_backend('agg')
 # Case-dependent input =============================================== CHJ =====
 
 # Path to the directories where the input files are located.
-#dnm_in1="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/expt_dirs/test_community/2020122700/"
-dnm_in1="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/debug_ic/new_ic_grb2"
-dnm_in2="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/debug_ic/new_ic_netcdf"
+dnm_in1="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/ufs_srw_app/srw_dev_test/expt_dirs/grid_RRFS_NA_13km/2019070100/"
+dnm_in2=dnm_in1
 
 # Input file name
-fnm_in1='gfs_data_grb2.nc'
-fnm_in2='gfs_data_netcdf.nc'
+fnm_in1='phyf005.nc'
+fnm_in2='phyf006.nc'
+
+# Domain name
+domain_nm='RRFS_NA_13km'
 
 print(fnm_in1[-5:])
 
 # Variables
-#vars_comp=["ps","delp"]
+vars_comp=["tmp2m"]
+#vars_comp=["orog_filt"]
 #vars_comp=["sphum","liq_wat","o3mr","ice_wat","rainwat","snowwat","graupel","ice_aero","liq_aero"]
-vars_comp=["u_w","v_w","u_s","v_s"]
+#vars_comp=["u_w","v_w","u_s","v_s"]
 
 if fnm_in1[-2:]=='nc':
     ftype=1
@@ -139,7 +143,7 @@ def comp_plot(svar):
             sfld2d1=sfld1
         elif sfld1.ndim==3:
             (nts1,nys1,nxs1)=sfld1.shape
-            print(' File 1: time(level)+2D: nts=',nts1,' nys=',nys1,' nxs=',nxs1)
+            print(' File 1: time/level+2D: nts=',nts1,' nys=',nys1,' nxs=',nxs1)
             sfld2d1=np.squeeze(sfld1[ilvlm,:,:])
 
         print(fnm_in1[0:8])
@@ -168,7 +172,7 @@ def comp_plot(svar):
             sfld2d2=sfld2
         elif sfld2.ndim==3:
             (nts2,nys2,nxs2)=sfld2.shape
-            print(' File 2: time(level)+2D: nts=',nts2,' nys=',nys2,' nxs=',nxs2)
+            print(' File 2: time/level+2D: nts=',nts2,' nys=',nys2,' nxs=',nxs2)
             sfld2d2=np.squeeze(sfld2[ilvlm,:,:])
 
         if nys1!=nys2 or nxs1!=nxs2:
@@ -253,14 +257,18 @@ def comp_plot(svar):
     print(' cs_max_org=',cs_max_12)
     print(' cs_min_org=',cs_min_12)
 
-    out_title_fld_1 = out_title_fld+"::Data 1"
-    out_title_fld_2 = out_title_fld+"::Data 2"
+    out_title_fld_1 = out_title_fld+":: nemsio"
+    out_title_fld_2 = out_title_fld+":: grib2"
 
 
     # Plot field: DATA 1
-    fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
-    ax.set_extent(extent, ccrs.PlateCarree())
-    # Call background plot
+    if domain_nm[:7]=='RRFS_NA':
+        fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Orthographic(
+                            central_longitude=-107,central_latitude=53)))
+    else:
+        fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
+        ax.set_extent(extent, ccrs.PlateCarree())
+
     back_plot(ax)
     ax.set_title(out_title_fld_1,fontsize=9)
     cs=ax.pcolormesh(lon,lat,sfld2d1,cmap=cs_cmap_org,rasterized=True,
@@ -269,17 +277,21 @@ def comp_plot(svar):
     ax_cb=divider.new_horizontal(size="3%",pad=0.1,axes_class=plt.Axes)
     fig.add_axes(ax_cb)
     cbar=plt.colorbar(cs,cax=ax_cb,extend=lb_ext)
-    cbar.ax.tick_params(labelsize=8)
-    cbar.set_label(svar,fontsize=8)
+    cbar.ax.tick_params(labelsize=6)
+    cbar.set_label(svar,fontsize=6)
     # Output figure
     out_comp_fname_1 = out_comp_fname+"_dat1"
     ndpi=300
     out_file(out_comp_fname_1,ndpi)
 
     # Plot field: DATA 2
-    fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
-    ax.set_extent(extent, ccrs.PlateCarree())
-    # Call background plot
+    if domain_nm[:7]=='RRFS_NA':
+        fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Orthographic(
+                            central_longitude=-107,central_latitude=53)))
+    else:
+        fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
+        ax.set_extent(extent, ccrs.PlateCarree())
+    
     back_plot(ax)
     ax.set_title(out_title_fld_2,fontsize=9)
     cs=ax.pcolormesh(lon,lat,sfld2d2,cmap=cs_cmap_org,rasterized=True,
@@ -288,8 +300,8 @@ def comp_plot(svar):
     ax_cb=divider.new_horizontal(size="3%",pad=0.1,axes_class=plt.Axes)
     fig.add_axes(ax_cb)
     cbar=plt.colorbar(cs,cax=ax_cb,extend=lb_ext)
-    cbar.ax.tick_params(labelsize=8)
-    cbar.set_label(svar,fontsize=8)
+    cbar.ax.tick_params(labelsize=6)
+    cbar.set_label(svar,fontsize=6)
     # Output figure
     out_comp_fname_2 = out_comp_fname+"_dat2"
     ndpi=300
@@ -334,9 +346,13 @@ def comp_plot(svar):
 
 
     # Plot field
-    fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
-    ax.set_extent(extent, ccrs.PlateCarree())
-    # Call background plot
+    if domain_nm[:7]=='RRFS_NA':
+        fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Orthographic(
+                            central_longitude=-107,central_latitude=53)))
+    else:
+        fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
+        ax.set_extent(extent, ccrs.PlateCarree())
+
     back_plot(ax)
     ax.set_title(out_title_fld,fontsize=9)
     cs=ax.pcolormesh(lon,lat,svcomp,cmap=cs_cmap,rasterized=True,
@@ -345,8 +361,8 @@ def comp_plot(svar):
     ax_cb=divider.new_horizontal(size="3%",pad=0.1,axes_class=plt.Axes)
     fig.add_axes(ax_cb)
     cbar=plt.colorbar(cs,cax=ax_cb,extend=lb_ext)
-    cbar.ax.tick_params(labelsize=8)
-    cbar.set_label(nm_svar,fontsize=8)
+    cbar.ax.tick_params(labelsize=6)
+    cbar.set_label(nm_svar,fontsize=6)
 
     # Output figure
     ndpi=300
@@ -395,9 +411,13 @@ def comp_plot(svar):
 
 
     # Plot field
-    fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
-    ax.set_extent(extent, ccrs.PlateCarree())
-    # Call background plot
+    if domain_nm[:7]=='RRFS_NA':
+        fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Orthographic(
+                            central_longitude=-107,central_latitude=53)))
+    else:
+        fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
+        ax.set_extent(extent, ccrs.PlateCarree())
+
     back_plot(ax)
     ax.set_title(out_title_fld_3,fontsize=9)
     cs=ax.pcolormesh(lon,lat,err_rel,cmap=cs_cmap,rasterized=True,
@@ -406,8 +426,8 @@ def comp_plot(svar):
     ax_cb=divider.new_horizontal(size="3%",pad=0.1,axes_class=plt.Axes)
     fig.add_axes(ax_cb)
     cbar=plt.colorbar(cs,cax=ax_cb,extend='max')
-    cbar.ax.tick_params(labelsize=8)
-    cbar.set_label(out_label,fontsize=8)
+    cbar.ax.tick_params(labelsize=6)
+    cbar.set_label(out_label,fontsize=6)
 
     # Output figure
     out_comp_fname_3 = out_comp_fname+"_err"
