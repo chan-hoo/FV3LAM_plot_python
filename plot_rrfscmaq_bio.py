@@ -75,7 +75,7 @@ vars_data=["AVG_NOAG_GROW","AVG_NOAG_NONGROW","AVG_NONONAG","AVG_ACETS","AVG_ACT
            "AVG_SABIW","AVG_SESQTW","AVG_TRPOW","LAI_ISOPW","LAI_MBOW","LAI_METHW"]
 
 # basic forms of title and file name
-out_title_base='RRFS_CMAQ::Bio::'+domain_nm+'::'
+out_title_base='RRFS-CMAQ::Bio::'+domain_nm+'::'
 out_fname_base='rrfscmaq_bio_'+domain_nm+'_'
 
 # Resolution of background natural earth data ('10m' or '50m' or '110m')

@@ -64,7 +64,7 @@ elif domain_nm=='RRFS_CONUS_3km':
 vars_data=["CO2","CO","SO2","OC","BC","PM2.5","NOx","NH3","MeanFRP"]
 
 # basic forms of title and file name
-out_title_base='RRFS_CMAQ::Emission::'+domain_nm+'::'
+out_title_base='RRFS-CMAQ::Emission::'+domain_nm+'::'
 out_fname_base='rrfscmaq_emission_'+domain_nm+'_'
 
 # Resolution of background natural earth data ('10m' or '50m' or '110m')
