@@ -6,6 +6,7 @@
 ## NOAA/NWS/NCEP/EMC
 ## History ===============================
 ## V000: 2021/06/28: Chan-Hoo Jeon : Preliminary version
+## V001: 2021/07/01: Chan-Hoo Jeon : Change to scatter plot
 ###################################################################### CHJ #####
 
 import os, sys
@@ -47,8 +48,8 @@ plt.switch_backend('agg')
 # Case-dependent input =============================================== CHJ =====
 
 # Domain name
-#domain_nm='GSD_HRRR_25km'
-domain_nm='RRFS_CONUS_3km'
+domain_nm='GSD_HRRR_25km'
+#domain_nm='RRFS_CONUS_3km'
 
 # grid file name
 if domain_nm=='GSD_HRRR_25km':
@@ -62,6 +63,7 @@ elif domain_nm=='RRFS_CONUS_3km':
 
 # Variables
 vars_data=["CO2","CO","SO2","OC","BC","PM2.5","NOx","NH3","MeanFRP"]
+#vars_data=["MeanFRP"]
 
 # basic forms of title and file name
 out_title_base='RRFS-CMAQ::Emission::'+domain_nm+'::'
@@ -105,6 +107,7 @@ def main():
         lon=(lon+180)%360-180
 
     print(lon.shape)
+    print(lat.shape)
 
     # Highest and lowest longitudes and latitudes for plot extent
     lon_min=np.min(lon)
@@ -147,36 +150,79 @@ def data_plot(svar):
         print(' time+2D: nts=',nts,' nys=',nys,' nxs=',nxs)
         sfld2d=np.squeeze(sfld,axis=0)
 
+    print(sfld.shape)
+    print(sfld2d.shape)
+
+    # extract non-zero cells
+    lon_pts=lon[sfld2d>0]
+    lat_pts=lat[sfld2d>0]
+    sfld_pts=sfld2d[sfld2d>0]
+
+    print(lon_pts.shape)
+    print(lat_pts.shape)
+    print(sfld_pts.shape)
+
+
     out_title_fld=out_title_base+svar
     out_fname=out_fname_base+svar
 
     nm_svar=svar
-    cs_cmap='nipy_spectral_r'
+    cs_cmap='jet'
     lb_ext='neither'
     tick_ln=1.5
     tick_wd=0.45
     tlb_sz=3
+    scat_sz=2
 
     cmap_range='round'
- 
+    cmap_fix_min=0.0
+    cmap_fix_max=10.0
+
     if svar=="CO2":
-        n_rnd=8
+#        n_rnd=8
+        cmap_range='fixed'
+        cmap_fix_min=0.0
+        cmap_fix_max=3e-7
     elif svar=="CO":
-        n_rnd=9
+#        n_rnd=9
+        cmap_range='fixed'
+        cmap_fix_min=0.0
+        cmap_fix_max=1e-8
     elif svar=="SO2":
-        n_rnd=10
+#        n_rnd=10
+        cmap_range='fixed'
+        cmap_fix_min=0.0
+        cmap_fix_max=3e-9
     elif svar=="OC":
-        n_rnd=9
+#        n_rnd=9
+        cmap_range='fixed'
+        cmap_fix_min=0.0
+        cmap_fix_max=1e-8
     elif svar=="BC":
-        n_rnd=11
+#        n_rnd=11
+        cmap_range='fixed'
+        cmap_fix_min=0.0
+        cmap_fix_max=3e-10
     elif svar=="PM2.5":
-        n_rnd=9
+#        n_rnd=9
+        cmap_range='fixed'
+        cmap_fix_min=0.0
+        cmap_fix_max=6e-9
     elif svar=="NOx":
-        n_rnd=10
+#        n_rnd=10
+        cmap_range='fixed'
+        cmap_fix_min=0.0
+        cmap_fix_max=1.5e-9
     elif svar=="NH3":
-        n_rnd=10
+#        n_rnd=10
+        cmap_range='fixed'
+        cmap_fix_min=0.0
+        cmap_fix_max=1.25e-9
     elif svar=="MeanFRP":
-        n_rnd=2
+#        n_rnd=2
+        cmap_range='fixed'
+        cmap_fix_min=0.0
+        cmap_fix_max=20.0
     else:
         n_rnd=7
 
@@ -200,8 +246,8 @@ def data_plot(svar):
         cs_min=fmin
         cs_max=fmax
     elif cmap_range=='fixed':
-        cs_min=-10.0
-        cs_max=10.0
+        cs_min=cmap_fix_min
+        cs_max=cmap_fix_max
     else:
         sys.exit('ERROR: wrong colormap-range flag !!!')
 
@@ -219,8 +265,8 @@ def data_plot(svar):
 
     back_plot(ax)
     ax.set_title(out_title_fld,fontsize=9)
-    cs=ax.pcolormesh(lon,lat,sfld2d,cmap=cs_cmap,rasterized=True,
-        vmin=cs_min,vmax=cs_max,transform=ccrs.PlateCarree())
+    cs=ax.scatter(lon_pts,lat_pts,transform=ccrs.PlateCarree(),c=sfld_pts,cmap=cs_cmap,
+                  vmin=cs_min,vmax=cs_max,s=scat_sz)
     divider=make_axes_locatable(ax)
     ax_cb=divider.new_horizontal(size="3%",pad=0.1,axes_class=plt.Axes)
     fig.add_axes(ax_cb)
