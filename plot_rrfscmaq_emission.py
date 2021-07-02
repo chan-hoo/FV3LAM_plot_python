@@ -7,6 +7,7 @@
 ## History ===============================
 ## V000: 2021/06/28: Chan-Hoo Jeon : Preliminary version
 ## V001: 2021/07/01: Chan-Hoo Jeon : Change to scatter plot
+## V002: 2021/07/02: Chan-Hoo Jeon : Add grid_spec
 ###################################################################### CHJ #####
 
 import os, sys
@@ -16,7 +17,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import numpy as np
 from netCDF4 import Dataset
-from scipy.io import netcdf
+#from scipy.io import netcdf
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import cartopy
@@ -36,6 +37,7 @@ if machine=='hera':
     cartopy.config['data_dir']='/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/NaturalEarth'
     out_fig_dir="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/fv3sar_pre_plot/Fig/"
     mfdt_kwargs={'parallel':False}
+    path_fix="/scratch2/NCEPDEV/naqfc/RRFS_CMAQ/nexus/fix/"
 elif machine=='orion':
     cartopy.config['data_dir']='/home/chjeon/tools/NaturalEarth'
     out_fig_dir="/work/noaa/fv3-cam/chjeon/tools/Fig/"
@@ -57,13 +59,15 @@ if domain_nm=='GSD_HRRR_25km':
     dnm_in="/scratch2/NCEPDEV/naqfc/RRFS_CMAQ/emissions/GSCE/GBBEPx.in.C401/Reprocessed/20190708/"
 # input file name
     fnm_input='GBBEPx_C401GRID.emissions_v003_20190708.nc'
+    grid_spec='grid_spec_C401.nc'
 elif domain_nm=='RRFS_CONUS_3km':
     dnm_in="/scratch2/NCEPDEV/naqfc/RRFS_CMAQ/emissions/GSCE/GBBEPx.in.RRFS_CONUS_3km/Reprocessed/"
     fnm_input='GBBEPx_all3kmGRID_halo4.emissions_v003_20190708.nc'
+    grid_spec='grid_spec_RRFS_CONUS_3km.nc'
 
 # Variables
-vars_data=["CO2","CO","SO2","OC","BC","PM2.5","NOx","NH3","MeanFRP"]
-#vars_data=["MeanFRP"]
+#vars_data=["CO2","CO","SO2","OC","BC","PM2.5","NOx","NH3","MeanFRP"]
+vars_data=["MeanFRP"]
 
 # basic forms of title and file name
 out_title_base='RRFS-CMAQ::Emission::'+domain_nm+'::'
@@ -80,31 +84,27 @@ def main():
     global ds,lon,lat
     global extent,c_lon,c_lat
 
+    print(' ===== grid_spec =========================================')
+    fname=os.path.join(path_fix,grid_spec)
+    try: grd=Dataset(fname,'r')
+    except: raise Exception('Could NOT find the file',fname)
+    print(grd)
+
+    lon=grd.variables['grid_lont'][:]
+    lat=grd.variables['grid_latt'][:]
+
     print(' ===== Input data ========================================')
     # open the data file
     fname=os.path.join(dnm_in,fnm_input)
-
     # Check the variables in netcdf file
-    try: ds_o=Dataset(fname,'r')
+    try: ds=Dataset(fname,'r')
     except: raise Exception('Could NOT find the file',fname)
-    print(ds_o)
-    ds_o.close()
-
-    # Read netcdf using scipy.io because netCDF4 does not work for Longitude 
-    # (not integer array but netCDF4._netCDF4.Variable)
-    try: ds=netcdf.NetCDFFile(fname,'r')
-    except: raise Exception('Could NOT find the file',fname)
-
-    lon=ds.variables['Longitude']
-    lat=ds.variables['Latitude']
-
-    lon=lon[:]*1
-    lat=lat[:]*1
-
-    lon_max=np.max(lon)
+    print(ds)
+    
+#    lon_max=np.max(lon)
     # Longitude 0:360 => -180:180
-    if lon_max>180:
-        lon=(lon+180)%360-180
+#    if lon_max>180:
+#        lon=(lon+180)%360-180
 
     print(lon.shape)
     print(lat.shape)
@@ -136,8 +136,7 @@ def data_plot(svar):
 
     print(' ===== '+svar+' ===== data ===============================')
     # Extract data array
-    sfld=ds.variables[svar]
-    sfld=sfld[:]*1
+    sfld=ds.variables[svar][:]
 
     ndim_svar=sfld.ndim
 
@@ -153,6 +152,12 @@ def data_plot(svar):
     print(sfld.shape)
     print(sfld2d.shape)
 
+    # Check if dimensions of grid and vars are matched
+    if sfld2d.shape==lon.shape:
+        print('Data and grid are matched !!!')
+    else:
+        sys.exit('ERROR: Size of data does NOT match with that of grid  !!!')
+
     # extract non-zero cells
     lon_pts=lon[sfld2d>0]
     lat_pts=lat[sfld2d>0]
@@ -161,7 +166,6 @@ def data_plot(svar):
     print(lon_pts.shape)
     print(lat_pts.shape)
     print(sfld_pts.shape)
-
 
     out_title_fld=out_title_base+svar
     out_fname=out_fname_base+svar
