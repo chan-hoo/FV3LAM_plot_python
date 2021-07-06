@@ -8,6 +8,7 @@
 ## V000: 2020/04/24: Chan-Hoo Jeon : Preliminary version
 ## V001: 2020/06/22: Chan-Hoo Jeon : Add opt. for machine-specific arguments
 ## V002: 2021/03/05: Chan-Hoo Jeon : Simplify the script
+## V003: 2021/07/06: Chan-Hoo Jeon : Add a plot for the entire domain
 ###################################################################### CHJ #####
 
 import os, sys
@@ -48,22 +49,28 @@ plt.switch_backend('agg')
 
 # Case-dependent input =============================================== CHJ =====
 # Path to the directory where the input NetCDF file is located.
-dnm_out="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/expt_dirs/test_community/2020122700/"
+dnm_data="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/ufs_srw_app/srw_dev_test/expt_dirs/inline_post/2019070100/"
 
 # grid file name
 fnm_input='grid_spec.nc'
 
-# Number of grid points in plotting
-n_gpt=20
+# Domain name
+domain_nm='RRFS_CONUS_25km'
 
-# Input grid file name (grid/orography w/ halo4)
-dnm_ref="/scratch2/NCEPDEV/stmp1/Chan-hoo.Jeon/expt_dirs/test_community/2020122700/INPUT/"
+# Grid point plot (every 'n_skip' rows/columns)
+n_skip=5
+
+# Flag for the reference grid (on/off)
+i_ref='on'
+
+# Reference grid file name (grid/orography w/ halo4)
+dnm_ref=dnm_data+"INPUT/"
 fnm_ref_grd='grid.tile7.halo4.nc'
 fnm_ref_oro='oro_data.tile7.halo4.nc'
 
 # basic forms of title and file name
-out_grd_title='FV3LAM::GRID_SPEC::'
-out_grd_fname='fv3lam_out_grdspec'
+out_grd_title='FV3LAM::GRID_SPEC::'+domain_nm
+out_grd_fname='fv3lam_out_grdspec_'+domain_nm
 
 # Resolution of background natural earth data ('50m' or '110m')
 back_res='50m'
@@ -72,10 +79,11 @@ back_res='50m'
 # Main part (will be called at the end) =================== CHJ =====
 def main():
 # ========================================================= CHJ =====
-
-    print(' ===== OUTPUT: grid_spec ================================')
+    
+    global golon,golat,golont,golatt
+    print(' ===== grid_spec ========================================')
     # open the data file
-    fname=os.path.join(dnm_out,fnm_input)
+    fname=os.path.join(dnm_data,fnm_input)
     try: grdo=xr.open_mfdataset(fname,**mfdt_kwargs)
     except: raise Exception('Could NOT find the file',fname)
     print(grdo)
@@ -84,6 +92,77 @@ def main():
     golat=np.ma.masked_invalid(grdo['grid_lat'].data)
     golont=np.ma.masked_invalid(grdo['grid_lont'].data)
     golatt=np.ma.masked_invalid(grdo['grid_latt'].data)
+
+    grd_plot()
+
+    if i_ref=='on':
+        # Number of grid points in plotting
+        n_gpt=20
+
+        grd_ref(n_gpt)
+
+# Grid plot =============================================== CHJ =====
+def grd_plot():
+# ========================================================= CHJ =====
+
+    # Highest and lowest longitudes and latitudes for plot extent
+    lon_min=np.min(golon)
+    lon_max=np.max(golon)
+    lat_min=np.min(golat)
+    lat_max=np.max(golat)
+
+    # Plot extent
+    extent=[lon_min-0.1,lon_max+1,lat_min-0.1,lat_max+1]
+    c_lon=np.mean(extent[:2])
+    c_lat=np.mean(extent[2:])
+
+    # corner grid points (every 'n_skip' rows/columns)
+    grdx_slc=golon[::n_skip,::n_skip]
+    grdy_slc=golat[::n_skip,::n_skip]
+
+    # center grid points (every 'n_skip' rows/columns)
+    grdtx_slc=golont[::n_skip,::n_skip]
+    grdty_slc=golatt[::n_skip,::n_skip]
+
+    if domain_nm[:7]=='RRFS_NA':
+        fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Orthographic(
+                            central_longitude=-107,central_latitude=53)))
+        ref_lon=-133.5
+        ref_lat=lat_min-5.5
+        lgd_loc='lower left'
+    else:
+        fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
+        ax.set_extent(extent, ccrs.PlateCarree())
+        ref_lon=lon_min-3
+        ref_lat=lat_max
+        lgd_loc='lower right'
+
+    ax.set_title(out_grd_title, fontsize=8)
+
+    # Call background plot
+    back_plot(ax)
+
+    # Scatter plot (zorder: lowest-plot on bottom, highest-plot on top)
+    sp_scale=2
+    s1=ax.scatter(grdx_slc,grdy_slc,transform=ccrs.PlateCarree(),marker='o',
+         facecolors="none",edgecolors='red',linewidth=0.3,s=sp_scale,zorder=3)
+
+    s2=ax.scatter(grdtx_slc,grdty_slc,transform=ccrs.PlateCarree(),marker='*',
+         facecolors='blue',edgecolors='blue',linewidth=0.3,s=sp_scale,zorder=4)
+
+    ref_txt='Every '+str(n_skip)+' (i,j)s'
+    plt.text(ref_lon,ref_lat,ref_txt,transform=ccrs.Geodetic(),fontsize=6)
+    plt.legend((s1,s2),('g-corner','g-center'),scatterpoints=1,loc=lgd_loc,ncol=1,fontsize=6)
+
+    # Output figure
+    ndpi=300
+    out_file(out_grd_fname,ndpi)
+
+
+
+# Grid comparison with reference grids ==================== CHJ =====
+def grd_ref(n_gpt):
+# ========================================================= CHJ =====
 
     print(' ===== REFERENCE: Super-grid (halo4) =======================')
     # open the data file
@@ -157,8 +236,9 @@ def main():
     plt.legend((s1,s2,s3,s4),('super-grid','oro-grid','lon/lat','lont/latt'),scatterpoints=1,loc='upper right',ncol=2,fontsize=8)
 
     # Output figure
+    out_grd_ref_fname=out_grd_fname+'_comref'
     ndpi=300
-    out_file(out_grd_fname,ndpi)
+    out_file(out_grd_ref_fname,ndpi)
 
    
 
