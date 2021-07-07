@@ -8,6 +8,7 @@
 ## V000: 2021/06/28: Chan-Hoo Jeon : Preliminary version
 ## V001: 2021/07/01: Chan-Hoo Jeon : Change to scatter plot
 ## V002: 2021/07/02: Chan-Hoo Jeon : Add grid_spec
+## V003: 2021/07/05: Chan-Hoo Jeon : lon/lat check
 ###################################################################### CHJ #####
 
 import os, sys
@@ -17,7 +18,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import numpy as np
 from netCDF4 import Dataset
-#from scipy.io import netcdf
+from scipy.io import netcdf
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import cartopy
@@ -50,8 +51,8 @@ plt.switch_backend('agg')
 # Case-dependent input =============================================== CHJ =====
 
 # Domain name
-domain_nm='GSD_HRRR_25km'
-#domain_nm='RRFS_CONUS_3km'
+#domain_nm='GSD_HRRR_25km'
+domain_nm='RRFS_CONUS_3km'
 
 # grid file name
 if domain_nm=='GSD_HRRR_25km':
@@ -81,7 +82,7 @@ back_res='50m'
 # Main part (will be called at the end) ======================= CHJ =====
 def main():
 # ============================================================= CHJ =====
-    global ds,lon,lat
+    global ds,data_lon,data_lat
     global extent,c_lon,c_lat
 
     print(' ===== grid_spec =========================================')
@@ -90,8 +91,11 @@ def main():
     except: raise Exception('Could NOT find the file',fname)
     print(grd)
 
-    lon=grd.variables['grid_lont'][:]
-    lat=grd.variables['grid_latt'][:]
+    lon_o=grd.variables['grid_lont'][:]
+    lat_o=grd.variables['grid_latt'][:]
+    lonc_o=grd.variables['grid_lon'][:]
+    latc_o=grd.variables['grid_lat'][:]
+   
 
     print(' ===== Input data ========================================')
     # open the data file
@@ -100,20 +104,60 @@ def main():
     try: ds=Dataset(fname,'r')
     except: raise Exception('Could NOT find the file',fname)
     print(ds)
+
+# Compare lon/lat between grid_spec and emission data ========================
+    # Read netcdf using scipy.io because netCDF4 does not work for Longitude 
+    # (not integer array but netCDF4._netCDF4.Variable)
+    print(' ===== lon/lat : emission data ===========================')
+    try: dsc=netcdf.NetCDFFile(fname,'r')
+    except: raise Exception('Could NOT find the file',fname)
+    lonc=dsc.variables['Longitude']
+    latc=dsc.variables['Latitude']
+    lonc=lonc[:]*1
+    latc=latc[:]*1
+# Size check
+    if domain_nm=='GSD_HRRR_25km':
+        sz_grid_lon=lon_o.shape
+        sz_data_lon=lonc.shape
+        sz_grid_lat=lat_o.shape
+        sz_data_lat=latc.shape
+        data_lon=lon_o
+        data_lat=lat_o
+    else:
+        sz_grid_lon=lonc_o.shape
+        sz_data_lon=lonc.shape
+        sz_grid_lat=latc_o.shape
+        sz_data_lat=latc.shape
+        data_lon=lonc_o
+        data_lat=latc_o
+
+    print('SIZE::grid_spec:',sz_grid_lon)
+    print('SIZE::data set :',sz_data_lon)
+    if sz_grid_lon==sz_data_lon and sz_grid_lat==sz_grid_lat:
+        print('Grid shape: SAME !!!')
+    else:
+        sys.exit('ERROR: Size of data does NOT match with that of grid  !!!')
+# Data check
+    diff_lonc=lonc-data_lon
+    sum_diff_lonc=np.sum(diff_lonc)
+    diff_latc=latc-data_lat
+    sum_diff_latc=np.sum(diff_latc)
+    if sum_diff_lonc==0 and sum_diff_latc==0:
+        print('Grids are the same !!!')
+    else:
+        sys.exit('ERROR: Grids are NOT the same  !!!')
+# =============================================================================
     
 #    lon_max=np.max(lon)
     # Longitude 0:360 => -180:180
 #    if lon_max>180:
 #        lon=(lon+180)%360-180
 
-    print(lon.shape)
-    print(lat.shape)
-
     # Highest and lowest longitudes and latitudes for plot extent
-    lon_min=np.min(lon)
-    lon_max=np.max(lon)
-    lat_min=np.min(lat)
-    lat_max=np.max(lat)
+    lon_min=np.min(lon_o)
+    lon_max=np.max(lon_o)
+    lat_min=np.min(lat_o)
+    lat_max=np.max(lat_o)
 
     print(' lon_min=',lon_min,', lon_max=',lon_max)
     print(' lat_min=',lat_min,', lat_max=',lat_max)
@@ -153,14 +197,14 @@ def data_plot(svar):
     print(sfld2d.shape)
 
     # Check if dimensions of grid and vars are matched
-    if sfld2d.shape==lon.shape:
+    if sfld2d.shape==data_lon.shape:
         print('Data and grid are matched !!!')
     else:
         sys.exit('ERROR: Size of data does NOT match with that of grid  !!!')
 
     # extract non-zero cells
-    lon_pts=lon[sfld2d>0]
-    lat_pts=lat[sfld2d>0]
+    lon_pts=data_lon[sfld2d>0]
+    lat_pts=data_lat[sfld2d>0]
     sfld_pts=sfld2d[sfld2d>0]
 
     print(lon_pts.shape)
