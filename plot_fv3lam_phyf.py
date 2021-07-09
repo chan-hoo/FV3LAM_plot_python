@@ -48,10 +48,12 @@ plt.switch_backend('agg')
 
 # Case-dependent input =============================================== CHJ =====
 # Path to the directory where the input NetCDF file is located.
-dnm_data="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/ufs_srw_app/srw_dev_test/expt_dirs/grid_RRFS_NA_13km/2019070100/"
+dnm_data="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/ufs_srw_app/srw_dev_test/expt_dirs/inline_post/2019070100/"
+#dnm_data="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/ufs_srw_app/srw_dev_test/expt_dirs/grid_RRFS_NA_13km/2019070100/"
 
 # Domain name
-domain_nm='RRFS_NA_13km'
+domain_nm='RRFS_CONUS_25km'
+#domain_nm='RRFS_NA_13km'
 
 # grid file name
 fnm_hr='f003'
@@ -88,6 +90,12 @@ vars_phy=["tmpsfc"]
 out_title_base='FV3LAM::PHY::'+domain_nm+'::'
 out_fname_base='fv3lam_out_phy_'+domain_nm+'_'
 
+# grid plot
+plot_grid='on'
+
+# Grid point plot (every 'n_skip' rows/columns) 
+n_skip=5
+
 # Resolution of background natural earth data ('10m' or '50m' or '110m')
 back_res='50m'
 
@@ -98,8 +106,9 @@ def main():
 # ============================================================= CHJ =====
     global phyf,lon,lat
     global extent,c_lon,c_lat
+    global lon_min,lat_min
 
-    print(' ===== OUTPUT: phy =======================================')
+    print(' ===== DATA: phy =======================================')
     # open the data file
     fname=os.path.join(dnm_data,fnm_input)
     try: phyf=xr.open_mfdataset(fname,**mfdt_kwargs)
@@ -124,9 +133,56 @@ def main():
     c_lon=np.mean(extent[:2])
     c_lat=np.mean(extent[2:])
 
+    # Grid plot
+    if plot_grid=='on':
+        grid_plot()
+
     # Variables
     for svar in vars_phy:
         phy_plot(svar)
+
+
+# ===== grid plot ============================================= CHJ =====
+def grid_plot():
+# ============================================================= CHJ =====
+
+    # grid points (every 'n_skip' rows/columns from 2nd row/col)
+    grdx_slc=lon[::n_skip,::n_skip]
+    grdy_slc=lat[::n_skip,::n_skip]
+
+    if domain_nm[:7]=='RRFS_NA':
+        fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Orthographic(
+                            central_longitude=-107,central_latitude=53)))
+        ref_lon=-133.5
+        ref_lat=lat_min-5.5
+        lgd_loc='lower left'
+    else:
+        fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
+        ax.set_extent(extent, ccrs.PlateCarree())
+        ref_lon=lon_min
+        ref_lat=lat_min-3
+        lgd_loc='lower right'
+
+    out_grd_title=out_title_base+'Grid'
+    out_grd_fname=out_fname_base+'grid' 
+
+    ax.set_title(out_grd_title, fontsize=9)
+
+    # Call background plot
+    back_plot(ax)
+
+    # Scatter plot (zorder: lowest-plot on bottom, highest-plot on top)
+    sp_scale=2
+    s1=ax.scatter(grdx_slc,grdy_slc,transform=ccrs.PlateCarree(),marker='o',facecolors="None",edgecolors='red',linewidth=0.3,s=sp_scale,zorder=3)
+
+    ref_txt='Grid: every '+str(n_skip)+'th col/row'
+    plt.text(ref_lon,ref_lat,ref_txt,transform=ccrs.Geodetic(),fontsize=8)
+#    plt.legend((s1),('super-grid'),scatterpoints=1,loc=lgd_loc,ncol=1,fontsize=8)
+
+    # Output figure
+    ndpi=300
+    out_file(out_grd_fname,ndpi)
+
 
 
 
@@ -142,7 +198,7 @@ def phy_plot(svar):
     print(' time+2D: nts=',nts,' nys=',nys,' nxs=',nxs)
     sfld2d=np.squeeze(sfld,axis=0)
     out_title_fld=out_title_base+svar+'::'+fnm_hr
-    out_dyn_fname=out_fname_base+svar+'_'+fnm_hr
+    out_phy_fname=out_fname_base+svar+'_'+fnm_hr
 
     nm_svar=svar
     cs_cmap='jet'
@@ -253,7 +309,7 @@ def phy_plot(svar):
 
     # Output figure
     ndpi=300
-    out_file(out_dyn_fname,ndpi)
+    out_file(out_phy_fname,ndpi)
 
   
 
