@@ -6,6 +6,7 @@
 ## NOAA/NWS/NCEP/EMC
 ## History ===============================
 ## V000: 2021/06/29: Chan-Hoo Jeon : Preliminary version
+## V001: 2021/07/12: Chan-Hoo Jeon : Add grid_spec.nc
 ###################################################################### CHJ #####
 
 import os, sys
@@ -46,21 +47,28 @@ plt.switch_backend('agg')
 # Case-dependent input =============================================== CHJ =====
 # Path to the directory where the input NetCDF file is located.
 dnm_in="/scratch2/NCEPDEV/naqfc/RRFS_CMAQ/aqm/bio/"
+# Path to grid_spec.nc
+dnm_gs="/scratch2/NCEPDEV/naqfc/RRFS_CMAQ/nexus/fix/"
 
 # Domain name
-domain_nm="GSD_HRRR_25km"
-#domain_nm="RRFS_CONUS_13km"
+#domain_nm="GSD_HRRR_25km"
+domain_nm="RRFS_CONUS_13km"
 
-# grid file name
+# input/grid_spec file names
 if domain_nm=="GSD_HRRR_25km":
     fnm_input="BEIS_SARC401.ncf"
+    grd_spc="grid_spec_GRD_HRRR_25km.nc"
 elif domain_nm=="RRFS_CONUS_13km":
     fnm_input="BEIS_RRFScmaq_C775.ncf"
+    grd_spc="grid_spec_RRFS_CONUS_13km.nc"
 else:
     sys.exit('ERROR: Wrong domain name !!!')
 
 # Variables
-vars_data=["AVG_NOAG_GROW","AVG_NOAG_NONGROW","AVG_NONONAG","AVG_ACETS","AVG_ACTACS",
+vars_all='no'
+
+if vars_all=='yes':
+    vars_data=["AVG_NOAG_GROW","AVG_NOAG_NONGROW","AVG_NONONAG","AVG_ACETS","AVG_ACTACS",
            "AVG_ACTALS","AVG_APINS","AVG_ATERPS","AVG_ATHUS","AVG_BPHES","AVG_BPINS",
            "AVG_BUTES","AVG_BUTOS","AVG_CAMPHS","AVG_COS","AVG_D3CARS","AVG_DLIMS",
            "AVG_ETHAS","AVG_ETHES","AVG_ETHOS","AVG_FORACS","AVG_FORMS","AVG_GTERPS",
@@ -73,6 +81,9 @@ vars_data=["AVG_NOAG_GROW","AVG_NOAG_NONGROW","AVG_NONONAG","AVG_ACETS","AVG_ACT
            "AVG_GTERPW","AVG_HEXAW","AVG_HEXEW","AVG_HEXYW","AVG_ISOPW","AVG_MBOW",
            "AVG_METHW","AVG_MYRCW","AVG_OCIMW","AVG_ORVOCW","AVG_PCYMW","AVG_PROPEW",
            "AVG_SABIW","AVG_SESQTW","AVG_TRPOW","LAI_ISOPW","LAI_MBOW","LAI_METHW"]
+else:
+    vars_data=["AVG_NOAG_GROW"]
+
 
 # basic forms of title and file name
 out_title_base='RRFS-CMAQ::Bio::'+domain_nm+'::'
@@ -89,6 +100,29 @@ def main():
     global ds,lon,lat
     global extent,c_lon,c_lat
 
+    print(' ===== grid_spec =========================================')
+    fnm0=os.path.join(dnm_gs,grd_spc)
+    try: gs=Dataset(fnm0,'r')
+    except: raise Exception('Could NOT find the file',fname)
+    print(gs)
+
+    lon_ref=gs.variables['grid_lont'][:]
+    lat_ref=gs.variables['grid_latt'][:] 
+
+    # Highest and lowest longitudes and latitudes for reference
+    lonr_min=np.min(lon_ref)
+    lonr_max=np.max(lon_ref)
+    latr_min=np.min(lat_ref)
+    latr_max=np.max(lat_ref)
+
+    print(' lon_ref_min=',lonr_min,', lon_ref_max=',lonr_max)
+    print(' lat_ref_min=',latr_min,', lat_ref_max=',latr_max)
+
+    # Longitude 0:360 => -180:180
+    if lonr_max>180:
+        lon_ref=(lon_ref+180)%360-180
+
+
     print(' ===== Input data ========================================')
     # open the data file
     fname=os.path.join(dnm_in,fnm_input)
@@ -96,8 +130,8 @@ def main():
     except: raise Exception('Could NOT find the file',fname)
     print(ds)
  
-    lon=ds.variables['XLONG']
-    lat=ds.variables['XLAT']
+    lon=ds.variables['XLONG'][:]
+    lat=ds.variables['XLAT'][:]
 
     # Highest and lowest longitudes and latitudes for plot extent
     lon_min=np.min(lon)
@@ -107,6 +141,25 @@ def main():
 
     print(' lon_min=',lon_min,', lon_max=',lon_max)
     print(' lat_min=',lat_min,', lat_max=',lat_max)
+
+    # Check grid size
+    grd_sz_gs=lon_ref.shape
+    grd_sz_ds=lon.shape
+
+    if grd_sz_gs==grd_sz_ds:
+        print(' ===== Grid sizes matched ! =====')
+    else:
+        sys.exit(' ===== ERROR: grid sizes NOT matched !!! =====')        
+
+    # Grid difference
+    diff_lon=np.abs(lon_ref-lon)
+    diff_lat=np.abs(lat_ref-lat)
+    e_lon=np.max(diff_lon)
+    e_lat=np.max(diff_lat)
+    print(' max. grid difference, lon=',e_lon)
+    print(' max. grid difference, lat=',e_lat)
+    if e_lon>0.01 or e_lat>0.01:
+        sys.exit(' ===== ERROR: lon/lat NOT matched !!! =====')
 
     # Plot extent
     esp=1
