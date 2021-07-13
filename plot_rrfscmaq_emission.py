@@ -51,8 +51,8 @@ plt.switch_backend('agg')
 # Case-dependent input =============================================== CHJ =====
 
 # Domain name
-#domain_nm='GSD_HRRR_25km'
-domain_nm='RRFS_CONUS_3km'
+domain_nm='GSD_HRRR_25km'
+#domain_nm='RRFS_CONUS_13km'
 
 # grid file name
 if domain_nm=='GSD_HRRR_25km':
@@ -61,6 +61,10 @@ if domain_nm=='GSD_HRRR_25km':
 # input file name
     fnm_input='GBBEPx_C401GRID.emissions_v003_20190708.nc'
     grid_spec='grid_spec_C401.nc'
+elif domain_nm=='RRFS_CONUS_13km':
+    dnm_in="/scratch2/NCEPDEV/naqfc/RRFS_CMAQ/emissions/GSCE/GBBEPx.in.RRFS_CONUS_13km/Reprocessed/"
+    fnm_input='GBBEPx_all13kmGRID.emissions_v003_20190708.nc'
+    grid_spec='grid_spec_RRFS_CONUS_13km.nc'
 elif domain_nm=='RRFS_CONUS_3km':
     dnm_in="/scratch2/NCEPDEV/naqfc/RRFS_CMAQ/emissions/GSCE/GBBEPx.in.RRFS_CONUS_3km/Reprocessed/"
     fnm_input='GBBEPx_all3kmGRID_halo4.emissions_v003_20190708.nc'
@@ -82,7 +86,7 @@ back_res='50m'
 # Main part (will be called at the end) ======================= CHJ =====
 def main():
 # ============================================================= CHJ =====
-    global ds,data_lon,data_lat
+    global ds,lon_o,lat_o
     global extent,c_lon,c_lat
 
     print(' ===== grid_spec =========================================')
@@ -104,10 +108,12 @@ def main():
     try: ds=Dataset(fname,'r')
     except: raise Exception('Could NOT find the file',fname)
     print(ds)
+    area=ds.variables['Area'][:]
 
 # Compare lon/lat between grid_spec and emission data ========================
     # Read netcdf using scipy.io because netCDF4 does not work for Longitude 
     # (not integer array but netCDF4._netCDF4.Variable)
+    ### !!!! Lon/Lat of emission data are NOT releable !!! ###
     print(' ===== lon/lat : emission data ===========================')
     try: dsc=netcdf.NetCDFFile(fname,'r')
     except: raise Exception('Could NOT find the file',fname)
@@ -115,37 +121,23 @@ def main():
     latc=dsc.variables['Latitude']
     lonc=lonc[:]*1
     latc=latc[:]*1
+# ============================================================================
+
 # Size check
     if domain_nm=='GSD_HRRR_25km':
-        sz_grid_lon=lon_o.shape
-        sz_data_lon=lonc.shape
-        sz_grid_lat=lat_o.shape
-        sz_data_lat=latc.shape
-        data_lon=lon_o
-        data_lat=lat_o
+        sz_grid=lon_o.shape
+        sz_data=area.shape
     else:
-        sz_grid_lon=lonc_o.shape
-        sz_data_lon=lonc.shape
-        sz_grid_lat=latc_o.shape
-        sz_data_lat=latc.shape
-        data_lon=lonc_o
-        data_lat=latc_o
+        sz_grid=lon_o.shape
+        sz_data=area.shape
 
-    print('SIZE::grid_spec:',sz_grid_lon)
-    print('SIZE::data set :',sz_data_lon)
-    if sz_grid_lon==sz_data_lon and sz_grid_lat==sz_grid_lat:
+    print('SIZE::grid_spec:',sz_grid)
+    print('SIZE::data set :',sz_data)
+    if sz_grid==sz_data:
         print('Grid shape: SAME !!!')
     else:
         sys.exit('ERROR: Size of data does NOT match with that of grid  !!!')
-# Data check
-    diff_lonc=lonc-data_lon
-    sum_diff_lonc=np.sum(diff_lonc)
-    diff_latc=latc-data_lat
-    sum_diff_latc=np.sum(diff_latc)
-    if sum_diff_lonc==0 and sum_diff_latc==0:
-        print('Grids are the same !!!')
-    else:
-        sys.exit('ERROR: Grids are NOT the same  !!!')
+
 # =============================================================================
     
 #    lon_max=np.max(lon)
@@ -197,14 +189,14 @@ def data_plot(svar):
     print(sfld2d.shape)
 
     # Check if dimensions of grid and vars are matched
-    if sfld2d.shape==data_lon.shape:
+    if sfld2d.shape==lon_o.shape:
         print('Data and grid are matched !!!')
     else:
         sys.exit('ERROR: Size of data does NOT match with that of grid  !!!')
 
     # extract non-zero cells
-    lon_pts=data_lon[sfld2d>0]
-    lat_pts=data_lat[sfld2d>0]
+    lon_pts=lon_o[sfld2d>0]
+    lat_pts=lat_o[sfld2d>0]
     sfld_pts=sfld2d[sfld2d>0]
 
     print(lon_pts.shape)
@@ -270,7 +262,7 @@ def data_plot(svar):
 #        n_rnd=2
         cmap_range='fixed'
         cmap_fix_min=0.0
-        cmap_fix_max=20.0
+        cmap_fix_max=50.0
     else:
         n_rnd=7
 
