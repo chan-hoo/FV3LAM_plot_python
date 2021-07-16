@@ -46,13 +46,13 @@ plt.switch_backend('agg')
 # Case-dependent input =============================================== CHJ =====
 
 # Domain name
-#domain_nm='GSD_HRRR_25km'
-domain_nm='RRFS_CONUS_13km'
+domain_nm='GSD_HRRR_25km'
+#domain_nm='RRFS_CONUS_13km'
 
 # grid file name
 if domain_nm=='GSD_HRRR_25km':
 # Path to the directory where the input NetCDF file is located.
-    dnm_in="/"
+    dnm_in="/scratch2/NCEPDEV/naqfc/Chan-hoo.Jeon/test_rrfs_cmaq/expt_dirs/test_cmaq/2019080112/NEXUS/"
 # input file name
     fnm_input='NEXUS_Expt.nc'
     grid_spec='grid_spec.nc'
