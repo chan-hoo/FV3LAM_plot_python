@@ -62,9 +62,14 @@ elif domain_nm=='RRFS_CONUS_13km':
     grid_spec='grid_spec.nc'
 
 # Variables
-vars_data=["ACET","ACROLEIN","ALD2","ALDX","BENZ","CH4","CO","ETH","ETHY","ETOH","FORM",
+vars_all='no'
+
+if vars_all=='yes':
+    vars_data=["ACET","ACROLEIN","ALD2","ALDX","BENZ","CH4","CO","ETH","ETHY","ETOH","FORM",
            "HCL","HONO","NH3","NO","NO2","OLE","PAL","PAR","PCA","PCL","PH2O","PMOTHR",
            "PNA","PNH4","POC","PSI","SO2","SOAALK","SULF","TERP","TOL","XYLMN"]
+else:
+    vars_data=["CO"]
 
 # Tile level
 l_time=1
@@ -174,13 +179,13 @@ def data_plot(svar):
     cmap_fix_min=0.0
     cmap_fix_max=10.0
 
-#    if svar=="ACET":
-#        n_rnd=8
-#        cmap_range='fixed'
-#        cmap_fix_min=0.0
-#        cmap_fix_max=3e-7
-#    else:
-#        n_rnd=7
+    if svar=="CO":
+        n_rnd=9
+        cmap_range='fixed'
+        cmap_fix_min=0.0
+        cmap_fix_max=1e-8
+    else:
+        n_rnd=7
 
 
     # Max and Min of the field
