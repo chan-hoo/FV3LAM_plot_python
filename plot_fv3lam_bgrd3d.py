@@ -10,6 +10,7 @@
 ## V002: 2020/07/20: Chan-Hoo Jeon : Add new cmap and background image option
 ## V003: 2021/03/05: Chan-Hoo Jeon : Simplify the script
 ## V004: 2021/06/24: Chan-Hoo Jeon : Add a projection for RRFS_NA domain
+## V005: 2021/08/25; Chan-Hoo Jeon : Add vars for RRFS-CMAQ
 ###################################################################### CHJ #####
 
 import os, sys
@@ -48,20 +49,22 @@ plt.switch_backend('agg')
 # Case-dependent input =============================================== CHJ =====
 
 # Path to the directory where the input NetCDF files are located.
-dnm_data="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/ufs_srw_app/srw_dev_test/expt_dirs/grid_RRFS_NA_13km/2019070100/postprd/"
+dnm_data="/scratch2/NCEPDEV/stmp3/Chan-hoo.Jeon/expt_dirs/test_cmaq_conus13_1day/2019080112/postprd/"
+#dnm_data="/scratch2/NCEPDEV/naqfc/Chan-hoo.Jeon/test_wcoss/"
 
 # Domain name
-domain_nm='RRFS_NA_13km'
+domain_nm='RRFS_CONUS_13km'
 
 # Input file hour number
 fnm_hr='f003'
 
-# Input file (BGRD3DXX.tmXX)
-fnm_in='rrfs.t00z.bgrd3d'+fnm_hr+'.tm00.grib2'
+# Input file (BGRD3D / NATLEV)
+#fnm_in='rrfs.t00z.bgrd3d'+fnm_hr+'.tm00.grib2'
+fnm_in='rrfs.t12z.natlev'+fnm_hr+'.tm00.grib2'
 
 # Output fields
 ##### hybrid levels #####
-vars_grb2=["Temperature on model surface"]
+#vars_grb2=["Temperature on model surface"]
 #vars_grb2=["Specific humidity on model surface"]
 #vars_grb2=["Cloud mixing ratio on model surface"]
 #vars_grb2=["Rain mixing ratio on model surface"]
@@ -86,6 +89,9 @@ vars_grb2=["Temperature on model surface"]
 #vars_grb2=["Specific humidity in boundary layer"]
 #vars_grb2=["U wind in boundary layer"]
 #vars_grb2=["V wind in boundary layer"]
+
+##### RRFS-CMAQ #####
+vars_grb2=["pmtf","ozcon"]
 
 
 # Total number of vertical layers in the case
@@ -146,6 +152,8 @@ def plot_grb2(svar):
     tlb_sz=3
     n_rnd=2
     cmap_range='round'
+    df_min=-10
+    df_max=10
 
     if svar=="Temperature on model surface":
         grbv=grbs.select(name="Temperature",typeOfLevel="hybrid")[ilvlm]
@@ -216,6 +224,11 @@ def plot_grb2(svar):
         cmap_range='symmetry'
         lb_ext='both'
         cs_cmap='seismic'
+    elif svar=="ozcon":
+        grbv=grbs.select(name="Ozone Concentration (PPB)",shortName="ozcon")[ilvlm]
+    elif svar=="pmtf":
+        grbv=grbs.select(name="Particulate matter (fine)",shortName="pmtf")[ilvlm]
+        cs_cmap="gist_ncar_r"        
     else:
         sys.exit('ERROR: Wrong svar or Not set up yet !!! ::'+svar)
 
@@ -274,10 +287,10 @@ def plot_grb2(svar):
         cs_min=fmin
         cs_max=fmax
     elif cmap_range=='fixed':
-        cs_min=-10.0
-        cs_max=10.0
+        cs_min=df_min
+        cs_max=df_max
     elif cmap_range=='designed':
-        cs_min=5
+        cs_min=df_min
         cs_max=None
     else:
         sys.exit('ERROR: wrong colormap-range flag !!!')
