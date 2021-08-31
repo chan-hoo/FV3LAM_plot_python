@@ -10,6 +10,7 @@
 ## V002: 2020/07/17: Chan-Hoo Jeon : Add new cmap and background image
 ## V003: 2021/03/05: Chan-Hoo Jeon : Simplify the script
 ## V004: 2021/06/24: Chan-Hoo Jeon : Add a projection for RRFS_NA domain
+## V005: 2021/08/31: Chan-Hoo Jeon : Name change bgdawp -> prslev
 ###################################################################### CHJ #####
 
 import os, sys
@@ -112,8 +113,8 @@ vars_grb2=["Total precipitation","Composite radar reflectivity"]
 ilvl=1
 
 # basic forms of title and file name
-out_title_base='FV3LAM::BGDAWP::'+domain_nm+'::'+fnm_hr+'::'
-out_fname_base='fv3lam_out_bgdawp_'+domain_nm+'_'+fnm_hr+'_'
+out_title_base='FV3LAM::PRSLEV::'+domain_nm+'::'+fnm_hr+'::'
+out_fname_base='fv3lam_out_prslev_'+domain_nm+'_'+fnm_hr+'_'
 
 # Resolution of background natural earth data ('10m' or '50m' or '110m')
 back_res='50m'

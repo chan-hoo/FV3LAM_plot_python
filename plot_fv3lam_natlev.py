@@ -11,6 +11,7 @@
 ## V003: 2021/03/05: Chan-Hoo Jeon : Simplify the script
 ## V004: 2021/06/24: Chan-Hoo Jeon : Add a projection for RRFS_NA domain
 ## V005: 2021/08/25; Chan-Hoo Jeon : Add vars for RRFS-CMAQ
+## V006: 2021/08/31: Chan-Hoo Jeon : Name change bgrd3d -> natlev
 ###################################################################### CHJ #####
 
 import os, sys
@@ -101,8 +102,8 @@ nlvl=64
 ilvl=1
 
 # basic forms of title and file name
-out_title_base='FV3LAM::BGRD3D::'+domain_nm+'::'+fnm_hr+'::'
-out_fname_base='fv3lam_out_bgrd3d_'+domain_nm+'_'+fnm_hr+'_'
+out_title_base='FV3LAM::NATLEV::'+domain_nm+'::'+fnm_hr+'::'
+out_fname_base='fv3lam_out_natlev_'+domain_nm+'_'+fnm_hr+'_'
 
 # Resolution of background natural earth data ('10m' or '50m' or '110m')
 back_res='50m'
