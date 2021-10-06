@@ -13,6 +13,7 @@
 ## V005: 2021/04/09: Chan-Hoo Jeon : Add individual plots
 ## V006: 2021/04/20: Chan-Hoo Jeon : Add relative error plot
 ## V007: 2021/06/24: Chan-Hoo Jeon : Add a projection for RRFS_NA domain
+## V008: 2021/10/01: Chan-Hoo Jeon : Add dim=4
 ###################################################################### CHJ #####
 
 import os, sys
@@ -54,20 +55,20 @@ plt.switch_backend('agg')
 # Case-dependent input =============================================== CHJ =====
 
 # Path to the directories where the input files are located.
-dnm_in1="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/ufs_srw_app/srw_dev_test/expt_dirs/grid_RRFS_NA_13km/2019070100/"
-dnm_in2=dnm_in1
+dnm_in1="/scratch2/NCEPDEV/naqfc/Chan-hoo.Jeon/cam_cmaq_da/expt_dirs/test_AOD_PM25_NO2/2019080118/"
+dnm_in2="/scratch2/NCEPDEV/stmp3/Chan-hoo.Jeon/expt_dirs/test_da_no2_gsdhrrr25_1day/2019080118/"
 
 # Input file name
-fnm_in1='phyf005.nc'
-fnm_in2='phyf006.nc'
+fnm_in1='dynf000.nc'
+fnm_in2='dynf000.nc'
 
 # Domain name
-domain_nm='RRFS_NA_13km'
+domain_nm='GSD_HRRR_25km'
 
 print(fnm_in1[-5:])
 
 # Variables
-vars_comp=["tmp2m"]
+vars_comp=["no2"]
 #vars_comp=["orog_filt"]
 #vars_comp=["sphum","liq_wat","o3mr","ice_wat","rainwat","snowwat","graupel","ice_aero","liq_aero"]
 #vars_comp=["u_w","v_w","u_s","v_s"]
@@ -91,7 +92,7 @@ out_fname_base='fv3lam_comp_'
 out_title_base='COMP::'
 
 # Colormap range option ('symmetry','round','real','fixed')
-cmap_range_org='round'
+cmap_range_org='real'
 cmap_range='symmetry'
 cmap_range_err='round'
 
@@ -137,6 +138,7 @@ def comp_plot(svar):
     if ftype==1:
         print(' ===== '+svar+' ===== File 1  ===============================')
         sfld1=np.ma.masked_invalid(compf1[svar].data)
+        print('F1 dimensions=',sfld1.ndim)
         if sfld1.ndim==2:
             (nys1,nxs1)=sfld1.shape
             print(' File 1: 2D: nys=',nys1,' nxs=',nxs1)
@@ -145,6 +147,12 @@ def comp_plot(svar):
             (nts1,nys1,nxs1)=sfld1.shape
             print(' File 1: time/level+2D: nts=',nts1,' nys=',nys1,' nxs=',nxs1)
             sfld2d1=np.squeeze(sfld1[ilvlm,:,:])
+        elif sfld1.ndim==4:
+            (nts1,nvs1,nys1,nxs1)=sfld1.shape
+            print(' File 1: time+vlev+2D: nts=',nts1,' nvs=',nvs1,' nys=',nys1,' nxs=',nxs1)
+            sfld2d1=np.squeeze(sfld1[0,ilvlm,:,:])
+
+        print('slfd2d1 dim=',sfld2d1.ndim)
 
         print(fnm_in1[0:8])
         if fnm_in1[0:3]=='oro':
@@ -166,6 +174,7 @@ def comp_plot(svar):
  
         print(' ===== '+svar+' ===== File 2  ===============================')
         sfld2=np.ma.masked_invalid(compf2[svar].data)
+        print('F2 dimensions=',sfld2.ndim)
         if sfld2.ndim==2:
             (nys2,nxs2)=sfld2.shape
             print(' File 2: 2D: nys=',nys2,' nxs=',nxs2)
@@ -174,6 +183,13 @@ def comp_plot(svar):
             (nts2,nys2,nxs2)=sfld2.shape
             print(' File 2: time/level+2D: nts=',nts2,' nys=',nys2,' nxs=',nxs2)
             sfld2d2=np.squeeze(sfld2[ilvlm,:,:])
+        elif sfld2.ndim==4:
+            (nts2,nvs2,nys2,nxs2)=sfld2.shape
+            print(' File 2: time+vlev+2D: nts=',nts2,' nvs=',nvs2,' nys=',nys2,' nxs=',nxs2)
+            sfld2d2=np.squeeze(sfld2[0,ilvlm,:,:])
+
+        print('slfd2d2 dim=',sfld2d2.ndim)
+
 
         if nys1!=nys2 or nxs1!=nxs2:
             sys.exit('ERROR: array size mismatched!!!')
