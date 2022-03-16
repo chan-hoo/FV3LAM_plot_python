@@ -14,6 +14,7 @@
 ## V006: 2021/04/20: Chan-Hoo Jeon : Add relative error plot
 ## V007: 2021/06/24: Chan-Hoo Jeon : Add a projection for RRFS_NA domain
 ## V008: 2021/10/01: Chan-Hoo Jeon : Add dim=4
+## V010: 2022/03/16: Chan-Hoo Jeon : Improve grb option
 ###################################################################### CHJ #####
 
 import os, sys
@@ -55,21 +56,24 @@ plt.switch_backend('agg')
 # Case-dependent input =============================================== CHJ =====
 
 # Path to the directories where the input files are located.
-dnm_in1="/scratch2/NCEPDEV/naqfc/Chan-hoo.Jeon/cam_cmaq_da/expt_dirs/test_AOD_PM25_NO2/2019080118/"
-dnm_in2="/scratch2/NCEPDEV/stmp3/Chan-hoo.Jeon/expt_dirs/test_da_no2_gsdhrrr25_1day/2019080118/"
+dnm_in1="/scratch2/NCEPDEV/stmp3/Chan-hoo.Jeon/expt_dirs/test_cmaq_conus13_2days/2019080612/postprd/"
+dnm_in2="/scratch2/NCEPDEV/stmp3/Chan-hoo.Jeon/expt_dirs/uwm_aqm_conus13_2days/2019080612/postprd/"
 
 # Input file name
-fnm_in1='dynf000.nc'
-fnm_in2='dynf000.nc'
+fcst_hhh="040"
+fnm_in1='rrfs.t12z.natlevf'+fcst_hhh+'.tm00.grib2'
+fnm_in2=fnm_in1
+
+title_add="_v15p2"
 
 # Domain name
-domain_nm='GSD_HRRR_25km'
+domain_nm='RRFS_CONUS_13km'
 
 print(fnm_in1[-5:])
 
 # Variables
-vars_comp=["no2"]
-#vars_comp=["orog_filt"]
+#vars_comp=["tmp2m"]
+vars_comp=["pmtf", "ozcon"]
 #vars_comp=["sphum","liq_wat","o3mr","ice_wat","rainwat","snowwat","graupel","ice_aero","liq_aero"]
 #vars_comp=["u_w","v_w","u_s","v_s"]
 
@@ -77,8 +81,6 @@ if fnm_in1[-2:]=='nc':
     ftype=1
 elif fnm_in1[-5:]=='grib2':
     ftype=2
-    grb_name='2 metre temperature'
-    grb_typlvl='heightAboveGround'
 else:
     sys.exit('ERROR: wrong data type !!!')
 
@@ -88,8 +90,8 @@ ilvlm=ilvl-1
 n_rnd=3
 
 # Basic forms of output file and title
-out_fname_base='fv3lam_comp_'
-out_title_base='COMP::'
+out_fname_base='fv3lam_comp'+title_add+'_h'+fcst_hhh+'_'
+out_title_base='COMP'+title_add+'::h'+fcst_hhh+'::'
 
 # Colormap range option ('symmetry','round','real','fixed')
 cmap_range_org='real'
@@ -115,7 +117,6 @@ def main():
         fname=os.path.join(dnm_in2,fnm_in2)
         try: compf2=xr.open_mfdataset(fname,**mfdt_kwargs)
         except: raise Exception('Could NOT find the file',fname)
-        print(compf2)
 
     elif ftype==2:
         fname=os.path.join(dnm_in1,fnm_in1)
@@ -190,7 +191,6 @@ def comp_plot(svar):
 
         print('slfd2d2 dim=',sfld2d2.ndim)
 
-
         if nys1!=nys2 or nxs1!=nxs2:
             sys.exit('ERROR: array size mismatched!!!')
 
@@ -199,13 +199,31 @@ def comp_plot(svar):
 
     elif ftype==2:
         print(' ===== '+svar+' ===== File 1  ===============================')
-        grbv=compf1.select(name=grb_name,typeOfLevel=grb_typlvl)[ilvlm]
+
+        if svar=="tmp2m":
+            grbv=compf1.select(name="2 metre temperature",typeOfLevel="heightAboveGround")[ilvlm]
+        elif svar=="ozcon":
+            grbv=compf1.select(name="Ozone Concentration (PPB)",shortName="ozcon")[ilvlm]
+        elif svar=="pmtf":
+            grbv=compf1.select(name="Particulate matter (fine)",shortName="pmtf")[ilvlm]
+        else:
+            sys.exit('ERROR: Wrong svar or Not set up yet !!! ::'+svar)
+
         sfld2d1=grbv.values
         stnm=grbv.shortName
         lat,lon=grbv.latlons()
        
         print(' ===== '+svar+' ===== File 2  ===============================')
-        grbv=compf2.select(name=grb_name,typeOfLevel=grb_typlvl)[ilvlm]
+
+        if svar=="tmp2m":
+            grbv=compf2.select(name="2 metre temperature",typeOfLevel="heightAboveGround")[ilvlm]
+        elif svar=="ozcon":
+            grbv=compf2.select(name="Ozone Concentration (PPB)",shortName="ozcon")[ilvlm]
+        elif svar=="pmtf":
+            grbv=compf2.select(name="Particulate matter (fine)",shortName="pmtf")[ilvlm]
+        else:
+            sys.exit('ERROR: Wrong svar or Not set up yet !!! ::'+svar)
+
         sfld2d2=grbv.values
 
         out_title_fld=out_title_base+svar
