@@ -48,7 +48,7 @@ plt.switch_backend('agg')
 
 # Case-dependent input =============================================== CHJ =====
 # Path to the directory where the input NetCDF file is located.
-dnm_data="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/ufs_srw_app/srw_dev_test/expt_dirs/inline_post/2019070100/"
+dnm_data="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/online-cmaq_test/expt_dirs/grid_RRFS_CONUS_25km_ics_FV3GFS_lbcs_FV3GFS_suite_GFS_v17_p8/2019070100"
 #dnm_data="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/ufs_srw_app/srw_dev_test/expt_dirs/grid_RRFS_NA_13km/2019070100/"
 
 # Domain name
@@ -56,7 +56,7 @@ domain_nm='RRFS_CONUS_25km'
 #domain_nm='RRFS_NA_13km'
 
 # grid file name
-fnm_hr='f003'
+fnm_hr='f006'
 
 fnm_input='phy'+fnm_hr+'.nc'
 

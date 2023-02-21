@@ -9,6 +9,7 @@
 ## V001: 2021/07/01: Chan-Hoo Jeon : Change to scatter plot
 ## V002: 2021/07/02: Chan-Hoo Jeon : Add grid_spec
 ## V003: 2021/07/05: Chan-Hoo Jeon : lon/lat check
+## V004: 2023/02/21: Chan-Hoo Jeon : Add AQM_NA_13km
 ###################################################################### CHJ #####
 
 import os, sys
@@ -51,31 +52,21 @@ plt.switch_backend('agg')
 # Case-dependent input =============================================== CHJ =====
 
 # Domain name
-domain_nm='GSD_HRRR_25km'
-#domain_nm='RRFS_CONUS_13km'
+domain_nm='AQM_NA_13km'
 
-# grid file name
-if domain_nm=='GSD_HRRR_25km':
-# Path to the directory where the input NetCDF file is located.
-    dnm_in="/scratch2/NCEPDEV/naqfc/RRFS_CMAQ/emissions/GSCE/GBBEPx.in.C401/Reprocessed/20190708/"
-# input file name
-    fnm_input='GBBEPx_C401GRID.emissions_v003_20190708.nc'
-    grid_spec='grid_spec_C401.nc'
-elif domain_nm=='RRFS_CONUS_13km':
-    dnm_in="/scratch2/NCEPDEV/naqfc/RRFS_CMAQ/emissions/GSCE/GBBEPx.in.RRFS_CONUS_13km/Reprocessed/"
-    fnm_input='GBBEPx_all13kmGRID.emissions_v003_20190708.nc'
-    grid_spec='grid_spec_RRFS_CONUS_13km.nc'
-elif domain_nm=='RRFS_CONUS_3km':
-    dnm_in="/scratch2/NCEPDEV/naqfc/RRFS_CMAQ/emissions/GSCE/GBBEPx.in.RRFS_CONUS_3km/Reprocessed/"
-    fnm_input='GBBEPx_all3kmGRID_halo4.emissions_v003_20190708.nc'
-    grid_spec='grid_spec_RRFS_CONUS_3km.nc'
+dnm_in="/scratch2/NCEPDEV/naqfc/RRFS_CMAQ/RAVE_fire/"
+fnm_input='Hourly_Emissions_regrid_NA_13km_20230217_t06z_h72.nc'
+grid_spec='grid_spec_793.nc'
 
 # Variables
 #vars_data=["CO2","CO","SO2","OC","BC","PM2.5","NOx","NH3","MeanFRP"]
 vars_data=["MeanFRP"]
 
+# Select time step
+ihr=1
+
 # basic forms of title and file name
-out_title_base='RRFS-CMAQ::Emission::'+domain_nm+'::'
+out_title_base='AQM::Emission::'+domain_nm+'::'
 out_fname_base='rrfscmaq_emission_'+domain_nm+'_'
 
 # Resolution of background natural earth data ('10m' or '50m' or '110m')
@@ -108,35 +99,6 @@ def main():
     try: ds=Dataset(fname,'r')
     except: raise Exception('Could NOT find the file',fname)
     print(ds)
-    area=ds.variables['Area'][:]
-
-# Compare lon/lat between grid_spec and emission data ========================
-    # Read netcdf using scipy.io because netCDF4 does not work for Longitude 
-    # (not integer array but netCDF4._netCDF4.Variable)
-    ### !!!! Lon/Lat of emission data are NOT releable !!! ###
-    print(' ===== lon/lat : emission data ===========================')
-    try: dsc=netcdf.NetCDFFile(fname,'r')
-    except: raise Exception('Could NOT find the file',fname)
-    lonc=dsc.variables['Longitude']
-    latc=dsc.variables['Latitude']
-    lonc=lonc[:]*1
-    latc=latc[:]*1
-# ============================================================================
-
-# Size check
-    if domain_nm=='GSD_HRRR_25km':
-        sz_grid=lon_o.shape
-        sz_data=area.shape
-    else:
-        sz_grid=lon_o.shape
-        sz_data=area.shape
-
-    print('SIZE::grid_spec:',sz_grid)
-    print('SIZE::data set :',sz_data)
-    if sz_grid==sz_data:
-        print('Grid shape: SAME !!!')
-    else:
-        sys.exit('ERROR: Size of data does NOT match with that of grid  !!!')
 
 # =============================================================================
     
@@ -183,7 +145,8 @@ def data_plot(svar):
     elif ndim_svar==3:
         (nts,nys,nxs)=sfld.shape
         print(' time+2D: nts=',nts,' nys=',nys,' nxs=',nxs)
-        sfld2d=np.squeeze(sfld,axis=0)
+        sfld2d=sfld[ihr,:,:]
+        sfld2d=np.squeeze(sfld2d)
 
     print(sfld.shape)
     print(sfld2d.shape)
