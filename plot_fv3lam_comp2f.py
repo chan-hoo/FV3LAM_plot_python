@@ -56,25 +56,27 @@ plt.switch_backend('agg')
 # Case-dependent input =============================================== CHJ =====
 
 # Path to the directories where the input files are located.
-dnm_in1="/scratch2/NCEPDEV/stmp3/Chan-hoo.Jeon/expt_dirs/test_cmaq_conus13_2days/2019080612/postprd/"
-dnm_in2="/scratch2/NCEPDEV/stmp3/Chan-hoo.Jeon/expt_dirs/uwm_aqm_conus13_2days/2019080612/postprd/"
+dnm_in1="/scratch2/NCEPDEV/stmp3/Chan-hoo.Jeon/test_da/2022072003/fcst_fv3lam_spinup/"
+dnm_in2="/scratch2/NCEPDEV/stmp3/Chan-hoo.Jeon/test_da_new/2022072003/fcst_fv3lam_spinup/"
 
 # Input file name
-fcst_hhh="040"
-fnm_in1='rrfs.t12z.natlevf'+fcst_hhh+'.tm00.grib2'
+fcst_hhh="000"
+fnm_in1='phyf'+fcst_hhh+'.nc'
 fnm_in2=fnm_in1
 
-title_add="_v15p2"
+title_add="rrfs_workflow"
+title_add_fld1="org"
+title_add_fld2="new"
 
 # Domain name
-domain_nm='RRFS_CONUS_13km'
+domain_nm='RRFS_CONUS_3km'
 
 print(fnm_in1[-5:])
 
 # Variables
-#vars_comp=["tmp2m"]
-vars_comp=["pmtf", "ozcon"]
-#vars_comp=["sphum","liq_wat","o3mr","ice_wat","rainwat","snowwat","graupel","ice_aero","liq_aero"]
+vars_comp=["tmp2m"]
+#vars_comp=["pmtf", "ozcon"]
+#vars_comp=["ugrd10m","tmp2m"]
 #vars_comp=["u_w","v_w","u_s","v_s"]
 
 if fnm_in1[-2:]=='nc':
@@ -291,9 +293,8 @@ def comp_plot(svar):
     print(' cs_max_org=',cs_max_12)
     print(' cs_min_org=',cs_min_12)
 
-    out_title_fld_1 = out_title_fld+":: nemsio"
-    out_title_fld_2 = out_title_fld+":: grib2"
-
+    out_title_fld_1 = out_title_fld+"::"+title_add_fld1
+    out_title_fld_2 = out_title_fld+"::"+title_add_fld2
 
     # Plot field: DATA 1
     if domain_nm[:7]=='RRFS_NA':
@@ -342,9 +343,10 @@ def comp_plot(svar):
     out_file(out_comp_fname_2,ndpi)
 
 
-
 # ===== Difference plots ======================================== CHJ ===== 
     print(' COMP. field=',nm_svar)
+
+    out_title_fld_3 = out_title_fld+"::dat1-dat2"
 
     cs_cmap='seismic'
     # Max and Min of the field
@@ -388,7 +390,7 @@ def comp_plot(svar):
         ax.set_extent(extent, ccrs.PlateCarree())
 
     back_plot(ax)
-    ax.set_title(out_title_fld,fontsize=9)
+    ax.set_title(out_title_fld_3,fontsize=9)
     cs=ax.pcolormesh(lon,lat,svcomp,cmap=cs_cmap,rasterized=True,
         vmin=cs_min,vmax=cs_max,transform=ccrs.PlateCarree())
     divider=make_axes_locatable(ax)
@@ -408,7 +410,7 @@ def comp_plot(svar):
     err_rel=svcomp/sfld2d1*100
     err_rel[sfld2d1==0.0]=0.0
     err_rel=np.absolute(err_rel)
-    out_title_fld_3 = out_title_fld+"::Relative error (%)"
+    out_title_fld_4 = out_title_fld+"::Relative error (%)"
     out_label = nm_svar+": relative error (%)"
 
     cs_cmap='gist_ncar_r'
@@ -443,6 +445,9 @@ def comp_plot(svar):
     print(' cs_max_err=',cs_max_e)
     print(' cs_min_err=',cs_min_e)
 
+    if cs_max_e >= 100:
+        cs_max_e=100.0
+        cs_min_e=0.0
 
     # Plot field
     if domain_nm[:7]=='RRFS_NA':
@@ -453,7 +458,7 @@ def comp_plot(svar):
         ax.set_extent(extent, ccrs.PlateCarree())
 
     back_plot(ax)
-    ax.set_title(out_title_fld_3,fontsize=9)
+    ax.set_title(out_title_fld_4,fontsize=9)
     cs=ax.pcolormesh(lon,lat,err_rel,cmap=cs_cmap,rasterized=True,
         vmin=cs_min_e,vmax=cs_max_e,transform=ccrs.PlateCarree())
     divider=make_axes_locatable(ax)

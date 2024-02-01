@@ -47,7 +47,7 @@ plt.switch_backend('agg')
 # Case-dependent input =============================================== CHJ =====
 
 # Path to the directory where the input NetCDF file is located.
-dnm_data="/scratch2/NCEPDEV/stmp3/Chan-hoo.Jeon/expt_dirs/test_da_no2_gsdhrrr25_1day/2019080112/RESTART/"
+dnm_data="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/test/"
 
 # Domain name
 domain_nm='GSD_HRRR_25km'
@@ -84,7 +84,8 @@ def main():
 
     print(' ===== INPUT: Grid fron gfs_dat.nc ==================================')
     # open the data file
-    dnm_grd=dnm_data+"../INPUT/"
+#    dnm_grd=dnm_data+"../INPUT/"
+    dnm_grd=dnm_data
     fnm_grd='gfs_data.nc'
     fname=os.path.join(dnm_grd,fnm_grd)
     try: grdf=xr.open_mfdataset(fname,**mfdt_kwargs)
