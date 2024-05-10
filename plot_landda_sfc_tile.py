@@ -3,7 +3,7 @@
 ## Language	: Python 3.7
 ## Usage	: Plot output of land-DA workflow
 ## Input files  : grid_spec.nc
-## NOAA/NWS/NCEP/EMC
+## NOAA/EPIC
 ## History ===============================
 ## V000: 2024/02/01: Chan-Hoo Jeon : Preliminary version
 ###################################################################### CHJ #####

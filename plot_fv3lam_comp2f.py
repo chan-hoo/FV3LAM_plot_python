@@ -31,7 +31,7 @@ import cartopy
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 # HPC machine ('hera','orion')
-machine='hera'
+machine='orion'
 
 print(' You are on', machine)
 
