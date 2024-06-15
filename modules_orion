@@ -1,2 +1,2 @@
-module load miniconda/4.12.0
+module load miniconda3/4.10.3
 source ../PY_ENV/plot_python/bin/activate
