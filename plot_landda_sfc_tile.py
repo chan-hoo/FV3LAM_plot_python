@@ -29,7 +29,7 @@ machine='orion'
 
 print(' You are on', machine)
 
-#### Machine-specific input data ==================================== CHJ =====
+#### Machine-specific input data ===================================== CHJ =====
 # cartopy.config: Natural Earth data for background
 # out_fig_dir: directory where the output files are created
 
@@ -44,55 +44,63 @@ elif machine=='orion' or machine=='hercules':
 else:
     sys.exit('ERROR: Required input data are NOT set in this machine !!!')
 
-# Case-dependent input =============================================== CHJ =====
+# Case-dependent input ============================================== CHJ =====
 
-# Geo files
-fnm_base_orog='oro_C96.mx100.tile'
+# Path to the directory where the input NetCDF file is located: SFC_1 data
+path_sfc1="/work/noaa/epic/chjeon/landda_test/ptmp/test/tmp/DATA_SHARE/20000104"
+# sfc file name: pre_analysis
+fn_sfc1_base='20000104.000000.sfc_data.tile'
+sfc1_out_txt='sfc_pre_anal'
 
-# Path to the directory where the input NetCDF file is located.
-path_input="/work/noaa/epic/chjeon/landda_test/ptmp/test/com/landda/v1.2.1/landda.20000104"
-
-# input file name
-fnm_base_input='sfc_data.tile'
-fnm_date='20000104'
-
-num_tiles=6
-
-# Grid point plot (every 'n_skip' rows/columns)
-n_skip=5
+# Path to the directory where the input NetCDF file is located: SFC_2 data
+path_sfc2="/work/noaa/epic/chjeon/landda_test/ptmp/test/com/landda/v1.2.1/landda.20000104"
+# sfc file name: pre_analysis
+fn_sfc2_base='20000104.000000.sfc_data.tile'
+sfc2_out_txt='sfc_anal'
 
 # basic forms of title and file name
 out_title_base='Land-DA::SFC::'
-out_fname_base='landda_out_sfc_'
+out_fn_base='landda_out_sfc_'
 
+# Geo files
+fn_orog_base='oro_C96.mx100.tile'
+# Number of tiles
+num_tiles=6
 # Resolution of background natural earth data ('50m' or '110m')
 back_res='50m'
 
 
-# Main part (will be called at the end) =================== CHJ =====
+# Main part (will be called at the end) ============================= CHJ =====
 def main():
-# ========================================================= CHJ =====
-
+# =================================================================== CHJ =====
+    # get lon, lat from orography
     get_geo()
+    # get sfc data from dir1
+    sfc1_data=get_sfc(path_sfc1,fn_sfc1_base,sfc1_out_txt)
+    print(sfc1_data.shape)
+    # get sfc data from dir2
+    sfc2_data=get_sfc(path_sfc2,fn_sfc2_base,sfc2_out_txt)
+    print(sfc2_data.shape) 
+    # compare and plot sfc1 and sfc2
+    comp_sfc(sfc1_data,sfc2_data)
 
-
-# Orography plot ===================================================== CHJ =====
+# Orography plot ==================================================== CHJ =====
 def get_geo():
-# ==================================================================== CHJ =====
+# =================================================================== CHJ =====
 
     global glon,glat,lon_min,lon_max,lat_min,lat_max
 
-    print(' ===== geo data files ========================================')
+    print(' ===== geo data files ====================================')
     # open the data file
     glon_all=[]
     glat_all=[]
     for it in range(num_tiles):
         itp=it+1
-        fnm_orog=fnm_base_orog+str(itp)+'.nc'
-        fname=os.path.join(path_orog,fnm_orog)
+        fn_orog=fn_orog_base+str(itp)+'.nc'
+        fp_orog=os.path.join(path_orog,fn_orog)
 
-        try: orog=xr.open_dataset(fname)
-        except: raise Exception('Could NOT find the file',fname)
+        try: orog=xr.open_dataset(fp_orog)
+        except: raise Exception('Could NOT find the file',fp_orog)
 #        print(orog)
         # Extract longitudes, and latitudes
         geolon=np.ma.masked_invalid(orog['geolon'].data)
@@ -113,7 +121,7 @@ def get_geo():
     c_lon=-77.0369
 
     out_title=out_title_base+'GEO'
-    out_fname=out_fname_base+'geo'
+    out_fn=out_fn_base+'geo'
 
     fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
     ax.set_title(out_title, fontsize=6)
@@ -127,12 +135,35 @@ def get_geo():
         ax.scatter(glon[it,:,:],glat[it,:,:],transform=ccrs.PlateCarree(),marker='o',facecolors=s_color[it],s=s_scale,zorder=1)
     # Output figure
     ndpi=300
-    out_file(out_fname,ndpi)
+    out_file(out_fn,ndpi)
 
-   
-# Background plot ========================================== CHJ =====
+
+# Plot surfsce files ================================================ CHJ =====
+def get_sfc(path_sfc,fn_sfc_base,sfc_out_txt):
+# =================================================================== CHJ =====
+
+    print(' ===== sfc files :'+sfc_out_txt+' ========================')
+    # open the data file
+    snwdph_all=[]
+    for it in range(num_tiles):
+        itp=it+1
+        fn_sfc=fn_sfc_base+str(itp)+'.nc'
+        fp_sfc=os.path.join(path_sfc,fn_sfc)
+
+        try: sfc=xr.open_dataset(fp_sfc)
+        except: raise Exception('Could NOT find the file',fp_sfc)
+#        print(sfc)
+        # Extract snow depth
+        snwdph=np.ma.masked_invalid(sfc['snwdph'].data)
+        snwdph_all.append(snwdph[None,:])
+
+    sfc_snwdph=np.vstack(snwdph_all)
+    return sfc_snwdph
+
+
+# Background plot ==================================================== CHJ =====
 def back_plot(ax):
-# ========================================================== CHJ =====
+# ==================================================================== CHJ =====
     fline_wd=0.5  # line width
     falpha=0.3 # transparency
 
@@ -160,16 +191,16 @@ def back_plot(ax):
     ax.add_feature(coastline)
 
 
-# Output file ============================================= CHJ =====
+# Output file ======================================================= CHJ =====
 def out_file(out_file,ndpi):
-# ========================================================= CHJ =====
+# =================================================================== CHJ =====
     # Output figure
     fp_out=os.path.join(out_fig_dir,out_file)
     plt.savefig(fp_out+'.png',dpi=ndpi,bbox_inches='tight')
     plt.close('all')
 
 
-# Main call ================================================ CHJ =====
+# Main call ========================================================= CHJ =====
 if __name__=='__main__':
     main()
 
