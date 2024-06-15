@@ -219,10 +219,10 @@ def get_sfc(path_sfc,fn_sfc_base,sfc_out_txt):
     for it in range(num_tiles):
         cs=ax.pcolormesh(glon[it,:,:],glat[it,:,:],sfc_var[it,:,:],cmap=cs_cmap,rasterized=True,
             vmin=cs_min,vmax=cs_max,transform=ccrs.PlateCarree())
-        divider=make_axes_locatable(ax)
-        ax_cb=divider.new_horizontal(size="3%",pad=0.1,axes_class=plt.Axes)
-        fig.add_axes(ax_cb)
 
+    divider=make_axes_locatable(ax)
+    ax_cb=divider.new_horizontal(size="3%",pad=0.1,axes_class=plt.Axes)
+    fig.add_axes(ax_cb)
     cbar=plt.colorbar(cs,cax=ax_cb,extend=cbar_extend)
     cbar.ax.tick_params(labelsize=6)
     cbar.set_label(nm_svar,fontsize=6)
