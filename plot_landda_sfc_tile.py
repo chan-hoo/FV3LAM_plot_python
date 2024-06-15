@@ -146,7 +146,7 @@ def get_geo():
 def get_sfc(path_sfc,fn_sfc_base,sfc_out_txt):
 # =================================================================== CHJ =====
 
-    print(' ===== sfc files :'+sfc_out_txt+' ========================')
+    print(' ===== sfc files: '+sfc_out_txt+' ========================')
     # open the data file
     sfc_data_all=[]
     for it in range(num_tiles):
@@ -178,21 +178,21 @@ def get_sfc(path_sfc,fn_sfc_base,sfc_out_txt):
     sfc_var_min=np.min(sfc_var)
     print('sfc_var_max=',sfc_var_max)
     print('sfc_var_min=',sfc_var_min)
-    sfc_var_min05=sfc_var_min*0.5
-    sfc_var_max05=sfc_var_max*0.5
-    print('sfc_var_max05=',sfc_var_max05)
-    print('sfc_var_min05=',sfc_var_min05)
+    sfc_var_min08=sfc_var_min*0.8
+    sfc_var_max08=sfc_var_max*0.8
+    print('sfc_var_max08=',sfc_var_max08)
+    print('sfc_var_min08=',sfc_var_min08)
 
     if cmap_range_opt=='symmetry':
         n_rnd=0
-        tmp_cmp=max(abs(sfc_var_max05),abs(sfc_var_min05))
+        tmp_cmp=max(abs(sfc_var_max08),abs(sfc_var_min08))
         cs_min=round(-tmp_cmp,n_rnd)
         cs_max=round(tmp_cmp,n_rnd)
         cbar_extend='both'
     elif cmap_range_opt=='round':
         n_rnd=0
-        cs_min=round(sfc_var_min05,n_rnd)
-        cs_max=round(sfc_var_max05,n_rnd)
+        cs_min=round(sfc_var_min08,n_rnd)
+        cs_max=round(sfc_var_max08,n_rnd)
         cbar_extend='both'
     elif cmap_range_opt=='real':
         cs_min=sfc_var_min
