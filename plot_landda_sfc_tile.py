@@ -87,7 +87,7 @@ def main():
     sfc_xainc_data=get_sfc(path_sfc2,fn_xainc_base,'xainc')
     print(sfc_xainc_data.shape)
     # compare and plot sfc1 and sfc2
-    comp_sfc(sfc1_data,sfc2_data)
+    comp_sfc(sfc1_data,sfc2_data,sfc_xainc_data)
 
 
 # Orography plot ==================================================== CHJ =====
@@ -235,12 +235,22 @@ def get_sfc(path_sfc,fn_sfc_base,sfc_out_txt):
 
 
 # Compare and plot sfc_data ========================================= CHJ =====
-def comp_sfc(sfc1_data,sfc2_data):
+def comp_sfc(sfc1_data,sfc2_data,sfc_xainc_data):
 # =================================================================== CHJ =====
 
     print(' ===== compare sfc_data files ========================')
+    sfc_data_diff=sfc2_data-sfc1_data
+    
+    sfc_diff_max=np.max(sfc_data_diff)
+    sfc_diff_min=np.min(sfc_data_diff)
+    print('sfc_diff_max=',sfc_diff_max)
+    print('sfc_diff_min=',sfc_diff_min)
 
-
+    xainc_diff=sfc_xainc_data-sfc_data_diff
+    xainc_diff_max=np.max(xainc_diff)
+    xainc_diff_min=np.min(xainc_diff)
+    print('xainc_diff_max=',xainc_diff_max)
+    print('xainc_diff_min=',xainc_diff_min)
 
 
 # Background plot ==================================================== CHJ =====
