@@ -8,6 +8,7 @@
 ## NOAA/EPIC
 ## History ===============================
 ## V000: 2024/06/14: Chan-Hoo Jeon : Preliminary version
+## V001: 2024/07/15: Chan-Hoo Jeon : add comparison plot
 ###################################################################### CHJ #####
 
 import os, sys
@@ -48,25 +49,45 @@ else:
 # Case-dependent input ============================================== CHJ =====
 
 # SFC_1 data:
-path_sfc1="/scratch2/NAGAPE/epic/Chan-hoo.Jeon/global-workflow_test/stmp/RUNDIRS/snow_gsi/sfcanl.1388101"
-fn_sfc1_base='fnbgsi.00'
-fn_sfc1_ext=''
+path_sfc1="/scratch2/NAGAPE/epic/Chan-hoo.Jeon/global-workflow_test/comroot/snow_gdas/gdas.20211220/12/model_data/atmos/restart"
+fn_sfc1_base='20211220.180000.sfc_data.tile'
+fn_sfc1_ext='.nc'
+#path_sfc1="/scratch2/NAGAPE/epic/Chan-hoo.Jeon/global-workflow_test/stmp/RUNDIRS/snow_gsi/sfcanl.1388101"
+#fn_sfc1_base='fnbgsi.00'
+#fn_sfc1_ext=''
+#path_sfc1="/scratch2/NAGAPE/epic/Chan-hoo.Jeon/landda_test/ptmp/test/tmp/DATA_SHARE/20000103"
+#fn_sfc1_base='20000103.000000.sfc_data.tile'
+#fn_sfc1_ext='.nc'
+
 sfc1_out_txt='before'
 
 # SFC_2 data:
-path_sfc2=path_sfc1
-fn_sfc2_base='fnbgso.00'
-fn_sfc2_ext=''
+#path_sfc2='/scratch2/NAGAPE/epic/Chan-hoo.Jeon/global-workflow_test/comroot/snow_gdas/gdas.20211220/18/analysis/snow'
+path_sfc2='/scratch2/NAGAPE/epic/Chan-hoo.Jeon/global-workflow_test/stmp/RUNDIRS/snow_gdas/gdassnowanl_18/anl'
+fn_sfc2_base='20211220.180000.sfc_data.tile'
+fn_sfc2_ext='.nc'
+#path_sfc2=path_sfc1
+#fn_sfc2_base='fnbgso.00'
+#fn_sfc2_ext=''
+#path_sfc2="/scratch2/NAGAPE/epic/Chan-hoo.Jeon/landda_test/ptmp/test/com/landda/v1.2.1/landda.20000103"
+#fn_sfc2_base='20000103.000000.sfc_data.tile'
+#fn_sfc2_ext='.nc'
+
 sfc2_out_txt='after'
 
 # increment:
-fn_xainc_base='20000104.000000.xainc.sfc_data.tile'
+opt_analysis='jedi'
+path_xainc=path_sfc2
+fn_xainc_base='snowinc.20211220.180000.sfc_data.tile'
+#fn_xainc_base='20000103.000000.xainc.sfc_data.tile'
+fn_xainc_ext='.nc'
 
 # variable
-#sfc_var_nm='snwdph'
+#sfc_var_nm='snwdph'  # land-DA (jedi)
+sfc_var_nm='snodl'   # global-wflow (gdas)
 #sfc_var_nm='stc'
 #sfc_var_nm='smc'
-sfc_var_nm='slc'
+#sfc_var_nm='slc'
 
 # Vertical layer number
 zlyr_num=2
@@ -92,17 +113,27 @@ def main():
     get_geo()
     # get sfc data from dir1
     sfc1_data=get_sfc(path_sfc1,fn_sfc1_base,fn_sfc1_ext,sfc_var_nm,sfc1_out_txt,0)
-    print(sfc1_data.shape)
+    print('data 1: ',sfc1_data.shape)
     # get sfc data from dir2
     sfc2_data=get_sfc(path_sfc2,fn_sfc2_base,fn_sfc2_ext,sfc_var_nm,sfc2_out_txt,0)
-    print(sfc2_data.shape)
-    # get sfc increment data from dir2
-#    sfc_xainc_data=get_sfc(path_sfc2,fn_xainc_base,fn_xainc_ext,sfc_var_nm,'xainc',0)
-#    print(sfc_xainc_data.shape)
-    # compare sfc1 and sfc2
-#    compare_sfc(sfc1,sfc2)
+    print('data 2: ',sfc2_data.shape)
 
-# Orography plot ==================================================== CHJ =====
+    (ntile,ny,nx)=sfc1_data.shape
+    sfc_xainc_data=np.zeros([ntile,ny,nx])
+    print('zero array: ',sfc_xainc_data.shape)
+    opt_inc=0
+    # get sfc increment data from dir2
+    if sfc_var_nm == 'snodl' or sfc_var_nm == 'snwdph':
+        if opt_analysis == 'jedi':
+            sfc_xainc_data=get_sfc(path_xainc,fn_xainc_base,fn_xainc_ext,sfc_var_nm,'xainc',0)
+            print('inc: ',sfc_xainc_data.shape)
+            opt_inc=1
+
+    # compare sfc1 and sfc2
+    compare_sfc(sfc1_data,sfc2_data,sfc_xainc_data,opt_inc)
+        
+
+# geo lon/lat from orography ======================================== CHJ =====
 def get_geo():
 # =================================================================== CHJ =====
 
@@ -172,8 +203,9 @@ def get_sfc(path_sfc,fn_sfc_base,fn_sfc_ext,sfc_var_nm,sfc_out_txt,ref_opt):
 
         try: sfc=xr.open_dataset(fp_sfc)
         except: raise Exception('Could NOT find the file',fp_sfc)
-        if it == 1:
-            print(sfc)
+#        if it == 1:
+#            print(sfc)
+
         # Extract variable
         sfc_data=np.ma.masked_invalid(sfc[sfc_var_nm].data)
         if sfc_out_txt == 'xainc':
@@ -327,6 +359,75 @@ def get_sfc(path_sfc,fn_sfc_base,fn_sfc_ext,sfc_var_nm,sfc_out_txt,ref_opt):
             out_file(out_fn,300) 
     return sfc_var
 
+
+# Compare two data set and plot ===================================== CHJ =====
+def compare_sfc(sfc_data1,sfc_data2,inc_data,opt_inc):
+# =================================================================== CHJ =====
+    print(' ===== compare files =============================================')
+    print(' data 1: ',sfc_data1.shape)
+    print(' data 2: ',sfc_data2.shape)
+
+    diff_data=sfc_data2-sfc_data1
+    print(' diff. data: ',diff_data.shape)
+
+    diff_data_max=np.max(diff_data)
+    diff_data_min=np.min(diff_data)
+    print('diff_data_max=',diff_data_max)
+    print('diff_data_min=',diff_data_min)
+
+    diff_data_max08=diff_data_max*0.8
+    diff_data_min08=diff_data_min*0.8
+    print('diff_data_max08=',diff_data_max08)
+    print('diff_data_min08=',diff_data_min08)
+    diff_data_cs_max=max(abs(diff_data_max08),abs(diff_data_min08))
+    plot_increment(diff_data,'diff_sfc',diff_data_cs_max)
+
+    if opt_inc == 1:
+        diff_inc=diff_data-inc_data
+        diff_inc_max=np.max(diff_inc)
+        diff_inc_min=np.min(diff_inc)
+        print('diff_inc_max=',diff_inc_max)
+        print('diff_inc_min=',diff_inc_min)
+
+        diff_inc_max08=diff_inc_max*0.8
+        diff_inc_min08=diff_inc_min*0.8
+        print('diff_inc_max08=',diff_inc_max08)
+        print('diff_inc_min08=',diff_inc_min08)
+        diff_inc_cs_max=max(abs(diff_inc_max08),abs(diff_inc_min08))
+        plot_increment(diff_inc,'diff_inc',diff_inc_cs_max)
+
+
+# increment/difference plot ========================================== CHJ =====
+def plot_increment(plt_var,plt_var_nm,cs_max):
+# ==================================================================== CHJ =====
+
+    cs_cmap='seismic'
+    nm_svar='\u0394'+plt_var_nm
+    n_rnd=0
+    cs_min=cs_max*-1.0
+    cbar_extend='both'
+
+    out_title=out_title_base+plt_var_nm
+    out_fn=out_fn_base+plt_var_nm
+
+    fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
+    ax.set_title(out_title, fontsize=6)
+    # Call background plot
+    back_plot(ax)
+
+    for it in range(num_tiles):
+        cs=ax.pcolormesh(glon[it,:,:],glat[it,:,:],plt_var[it,:,:],cmap=cs_cmap,rasterized=True,
+            vmin=cs_min,vmax=cs_max,transform=ccrs.PlateCarree())
+
+    divider=make_axes_locatable(ax)
+    ax_cb=divider.new_horizontal(size="3%",pad=0.1,axes_class=plt.Axes)
+    fig.add_axes(ax_cb)
+    cbar=plt.colorbar(cs,cax=ax_cb,extend=cbar_extend)
+    cbar.ax.tick_params(labelsize=6)
+    cbar.set_label(nm_svar,fontsize=6)
+    # Output figure
+    ndpi=300
+    out_file(out_fn,ndpi)
 
 
 # Background plot ==================================================== CHJ =====
