@@ -48,53 +48,82 @@ else:
 
 # Case-dependent input ============================================== CHJ =====
 
-# SFC_1 data:
-path_sfc1="/scratch2/NAGAPE/epic/Chan-hoo.Jeon/global-workflow_test/comroot/snow_gdas/gdas.20211220/12/model_data/atmos/restart"
-fn_sfc1_base='20211220.180000.sfc_data.tile'
-fn_sfc1_ext='.nc'
-#path_sfc1="/scratch2/NAGAPE/epic/Chan-hoo.Jeon/global-workflow_test/stmp/RUNDIRS/snow_gsi/sfcanl.1388101"
-#fn_sfc1_base='fnbgsi.00'
-#fn_sfc1_ext=''
-#path_sfc1="/scratch2/NAGAPE/epic/Chan-hoo.Jeon/landda_test/ptmp/test/tmp/DATA_SHARE/20000103"
-#fn_sfc1_base='20000103.000000.sfc_data.tile'
-#fn_sfc1_ext='.nc'
+opt_analysis='jedi'  # jedi, gdas, gsi
+if opt_analysis == 'jedi':
+    # SFC_1 data:
+    path_sfc1='/scratch2/NAGAPE/epic/Chan-hoo.Jeon/landda_test/ptmp/test/tmp/DATA_SHARE/20000103'
+    fn_sfc1_base='20000103.000000.sfc_data.tile'
+    fn_sfc1_ext='.nc'
+    # SFC_2 data:
+    path_sfc2='/scratch2/NAGAPE/epic/Chan-hoo.Jeon/landda_test/ptmp/test/com/landda/v1.2.1/landda.20000103'
+    fn_sfc2_base='20000103.000000.sfc_data.tile'
+    fn_sfc2_ext='.nc'
+    # increment:
+    path_xainc=path_sfc2
+    fn_xainc_base='20000103.000000.xainc.sfc_data.tile'
+    fn_xainc_ext='.nc'
+    # variable
+    sfc_var_nm='snwdph'  # land-DA (jedi)
+
+elif opt_analysis == 'gdas':
+    # SFC_1 data:
+    path_sfc1='/scratch2/NAGAPE/epic/Chan-hoo.Jeon/global-workflow_test/comroot/snow_gdas/gdas.20211220/12/model_data/atmos/restart'
+    fn_sfc1_base='20211220.180000.sfc_data.tile'
+    fn_sfc1_ext='.nc'
+    # SFC_2 data:
+    path_sfc2='/scratch2/NAGAPE/epic/Chan-hoo.Jeon/global-workflow_test/comroot/snow_gdas/gdas.20211220/18/analysis/snow'
+    path_sfc2='/scratch2/NAGAPE/epic/Chan-hoo.Jeon/global-workflow_test/stmp/RUNDIRS/snow_gdas/gdassnowanl_18/anl'
+    fn_sfc2_base='20211220.180000.sfc_data.tile'
+    fn_sfc2_ext='.nc'
+    # increment:
+    path_xainc=path_sfc2
+    fn_xainc_base='snowinc.20211220.180000.sfc_data.tile'
+    fn_xainc_ext='.nc'
+    # variable
+    sfc_var_nm='snodl'   # global-wflow (gdas)
+
+elif opt_analysis == 'gsi':
+    # SFC_1 data:
+    path_sfc1='/scratch2/NAGAPE/epic/Chan-hoo.Jeon/global-workflow_test/stmp/RUNDIRS/snow_gsi/sfcanl.1388101'
+    fn_sfc1_base='fnbgsi.00'
+    fn_sfc1_ext=''
+    # SFC_2 data:
+    path_sfc2=path_sfc1
+    fn_sfc2_base='fnbgso.00'
+    fn_sfc2_ext=''
+    # variable
+    sfc_var_nm='snodl'
+    #sfc_var_nm='stc'
+    #sfc_var_nm='smc'
+    #sfc_var_nm='slc'
+
+else:
+    # SFC_1 data:
+    path_sfc1=''
+    fn_sfc1_base=''
+    fn_sfc1_ext=''
+    # SFC_2 data:
+    path_sfc2=''
+    path_sfc2=''
+    fn_sfc2_base=''
+    fn_sfc2_ext=''
+    # increment:
+    path_xainc=path_sfc2
+    fn_xainc_base=''
+    fn_xainc_ext=''
+    # variable
+    sfc_var_nm='snodl'
+
 
 sfc1_out_txt='before'
-
-# SFC_2 data:
-#path_sfc2='/scratch2/NAGAPE/epic/Chan-hoo.Jeon/global-workflow_test/comroot/snow_gdas/gdas.20211220/18/analysis/snow'
-path_sfc2='/scratch2/NAGAPE/epic/Chan-hoo.Jeon/global-workflow_test/stmp/RUNDIRS/snow_gdas/gdassnowanl_18/anl'
-fn_sfc2_base='20211220.180000.sfc_data.tile'
-fn_sfc2_ext='.nc'
-#path_sfc2=path_sfc1
-#fn_sfc2_base='fnbgso.00'
-#fn_sfc2_ext=''
-#path_sfc2="/scratch2/NAGAPE/epic/Chan-hoo.Jeon/landda_test/ptmp/test/com/landda/v1.2.1/landda.20000103"
-#fn_sfc2_base='20000103.000000.sfc_data.tile'
-#fn_sfc2_ext='.nc'
-
 sfc2_out_txt='after'
-
-# increment:
-opt_analysis='jedi'
-path_xainc=path_sfc2
-fn_xainc_base='snowinc.20211220.180000.sfc_data.tile'
-#fn_xainc_base='20000103.000000.xainc.sfc_data.tile'
-fn_xainc_ext='.nc'
-
-# variable
-#sfc_var_nm='snwdph'  # land-DA (jedi)
-sfc_var_nm='snodl'   # global-wflow (gdas)
-#sfc_var_nm='stc'
-#sfc_var_nm='smc'
-#sfc_var_nm='slc'
 
 # Vertical layer number
 zlyr_num=2
 
 # basic forms of title and file name
-out_title_base='Land-DA::SFC::'
-out_fn_base='landda_out_sfc_'
+out_title_base='Land-DA::SFC::'+opt_analysis+'::'
+out_fn_base='landda_out_sfc_'+opt_analysis+'_'
 
 # Geo files
 fn_orog_base='oro_C96.mx100.tile'
@@ -124,7 +153,7 @@ def main():
     opt_inc=0
     # get sfc increment data from dir2
     if sfc_var_nm == 'snodl' or sfc_var_nm == 'snwdph':
-        if opt_analysis == 'jedi':
+        if opt_analysis == 'jedi' or opt_analysis == 'gdas':
             sfc_xainc_data=get_sfc(path_xainc,fn_xainc_base,fn_xainc_ext,sfc_var_nm,'xainc',0)
             print('inc: ',sfc_xainc_data.shape)
             opt_inc=1
@@ -373,7 +402,7 @@ def plot_data(plt_var,plt_var_nm,plt_out_txt):
     print('var_max08=',var_max08)
     print('var_min08=',var_min08)
 
-    cmap_range_opt='fixed'
+    cmap_range_opt='real'
     cs_cmap='gist_ncar_r'
     if cmap_range_opt=='symmetry':
         n_rnd=0
