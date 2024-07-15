@@ -210,19 +210,12 @@ def get_sfc(path_sfc,fn_sfc_base,fn_sfc_ext,sfc_var_nm,sfc_out_txt,ref_opt):
         sfc_data=np.ma.masked_invalid(sfc[sfc_var_nm].data)
         if sfc_out_txt == 'xainc':
             sfc_data2d=np.squeeze(sfc_data,axis=(0,1))
-            cmap_range_opt='symmetry'
-            cs_cmap='seismic'
-            nm_svar='\u0394'+sfc_var_nm
         else:
             if sfc_var_nm == 'stc' or sfc_var_nm == 'smc' or sfc_var_nm == 'slc':
                 sfc_data3d=np.squeeze(sfc_data,axis=0)
                 sfc_data2d=sfc_data3d[zlyr_num,:,:]
             else:
                 sfc_data2d=np.squeeze(sfc_data,axis=0)
-
-            cmap_range_opt='fixed'
-            cs_cmap='gist_ncar_r'
-            nm_svar=sfc_var_nm
 
         sfc_data_all.append(sfc_data2d[None,:])
 
@@ -237,6 +230,12 @@ def get_sfc(path_sfc,fn_sfc_base,fn_sfc_ext,sfc_var_nm,sfc_out_txt,ref_opt):
             slmsk_all.append(slmsk2d[None,:])
 
     sfc_var=np.vstack(sfc_data_all)
+
+    if sfc_out_txt == 'xainc':
+        plot_increment(sfc_var,sfc_var_nm,sfc_out_txt)
+    else:
+        plot_data(sfc_var,sfc_var_nm,sfc_out_txt)
+   
     if ref_opt == 1:
         snowxy=np.vstack(snowxy_all)
         snowxy_max=np.max(snowxy)
@@ -249,63 +248,6 @@ def get_sfc(path_sfc,fn_sfc_base,fn_sfc_ext,sfc_var_nm,sfc_out_txt,ref_opt):
         print('slmsk_max=',slmsk_max)
         print('slmsk_min=',slmsk_min)
 
-    sfc_var_max=np.max(sfc_var)
-    sfc_var_min=np.min(sfc_var)
-    print('sfc_var_max=',sfc_var_max)
-    print('sfc_var_min=',sfc_var_min)
-    sfc_var_min08=sfc_var_min*0.8
-    sfc_var_max08=sfc_var_max*0.8
-    print('sfc_var_max08=',sfc_var_max08)
-    print('sfc_var_min08=',sfc_var_min08)
-
-    if cmap_range_opt=='symmetry':
-        n_rnd=0
-        tmp_cmp=max(abs(sfc_var_max08),abs(sfc_var_min08))
-        cs_min=round(-tmp_cmp,n_rnd)
-        cs_max=round(tmp_cmp,n_rnd)
-        cbar_extend='both'
-    elif cmap_range_opt=='round':
-        n_rnd=0
-        cs_min=round(sfc_var_min08,n_rnd)
-        cs_max=round(sfc_var_max08,n_rnd)
-        cbar_extend='both'
-    elif cmap_range_opt=='real':
-        cs_min=sfc_var_min
-        cs_max=sfc_var_max
-        cbar_extend='neither'
-    elif cmap_range_opt=='fixed':
-        cs_min=0.0
-        cs_max=150.0
-        cbar_extend='both'
-    else:
-        sys.exit('ERROR: wrong colormap-range flag !!!')
-
-    print('cs_max=',cs_max)
-    print('cs_min=',cs_min)
-
-    out_title=out_title_base+sfc_out_txt
-    out_fn=out_fn_base+sfc_out_txt
-
-    fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
-    ax.set_title(out_title, fontsize=6)
-    # Call background plot
-    back_plot(ax)
-
-    for it in range(num_tiles):
-        cs=ax.pcolormesh(glon[it,:,:],glat[it,:,:],sfc_var[it,:,:],cmap=cs_cmap,rasterized=True,
-            vmin=cs_min,vmax=cs_max,transform=ccrs.PlateCarree())
-
-    divider=make_axes_locatable(ax)
-    ax_cb=divider.new_horizontal(size="3%",pad=0.1,axes_class=plt.Axes)
-    fig.add_axes(ax_cb)
-    cbar=plt.colorbar(cs,cax=ax_cb,extend=cbar_extend)
-    cbar.ax.tick_params(labelsize=6)
-    cbar.set_label(nm_svar,fontsize=6)
-    # Output figure
-    ndpi=300
-    out_file(out_fn,ndpi)
-   
-    if ref_opt == 1:
         for it in range(num_tiles):
             glon_tile=np.squeeze(glon[it,:,:])
             if it == 0:
@@ -369,46 +311,35 @@ def compare_sfc(sfc_data1,sfc_data2,inc_data,opt_inc):
 
     diff_data=sfc_data2-sfc_data1
     print(' diff. data: ',diff_data.shape)
-
-    diff_data_max=np.max(diff_data)
-    diff_data_min=np.min(diff_data)
-    print('diff_data_max=',diff_data_max)
-    print('diff_data_min=',diff_data_min)
-
-    diff_data_max08=diff_data_max*0.8
-    diff_data_min08=diff_data_min*0.8
-    print('diff_data_max08=',diff_data_max08)
-    print('diff_data_min08=',diff_data_min08)
-    diff_data_cs_max=max(abs(diff_data_max08),abs(diff_data_min08))
-    plot_increment(diff_data,'diff_sfc',diff_data_cs_max)
+    plot_increment(diff_data,sfc_var_nm,'diff_sfc')
 
     if opt_inc == 1:
         diff_inc=diff_data-inc_data
-        diff_inc_max=np.max(diff_inc)
-        diff_inc_min=np.min(diff_inc)
-        print('diff_inc_max=',diff_inc_max)
-        print('diff_inc_min=',diff_inc_min)
-
-        diff_inc_max08=diff_inc_max*0.8
-        diff_inc_min08=diff_inc_min*0.8
-        print('diff_inc_max08=',diff_inc_max08)
-        print('diff_inc_min08=',diff_inc_min08)
-        diff_inc_cs_max=max(abs(diff_inc_max08),abs(diff_inc_min08))
-        plot_increment(diff_inc,'diff_inc',diff_inc_cs_max)
+        plt_var_nm=sfc_var_nm+'_xainc'
+        plot_increment(diff_inc,plt_var_nm,'diff_inc')
 
 
 # increment/difference plot ========================================== CHJ =====
-def plot_increment(plt_var,plt_var_nm,cs_max):
+def plot_increment(plt_var,plt_var_nm,plt_out_txt):
 # ==================================================================== CHJ =====
+    var_max=np.max(plt_var)
+    var_min=np.min(plt_var)
+    print(plt_var_nm,': diff : var_max=',var_max)
+    print(plt_var_nm,': diff : var_min=',var_min)
+    var_max08=var_max*0.8
+    var_min08=var_min*0.8
+    print(plt_var_nm,': diff : var_max08=',var_max08)
+    print(plt_var_nm,': diff : var_min08=',var_min08)
 
+    cs_max=max(abs(var_max08),abs(var_min08))
+    cs_min=cs_max*-1.0
     cs_cmap='seismic'
     nm_svar='\u0394'+plt_var_nm
     n_rnd=0
-    cs_min=cs_max*-1.0
     cbar_extend='both'
 
-    out_title=out_title_base+plt_var_nm
-    out_fn=out_fn_base+plt_var_nm
+    out_title=out_title_base+plt_var_nm+'::'+plt_out_txt
+    out_fn=out_fn_base+plt_var_nm+'_'+plt_out_txt
 
     fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
     ax.set_title(out_title, fontsize=6)
@@ -425,6 +356,68 @@ def plot_increment(plt_var,plt_var_nm,cs_max):
     cbar=plt.colorbar(cs,cax=ax_cb,extend=cbar_extend)
     cbar.ax.tick_params(labelsize=6)
     cbar.set_label(nm_svar,fontsize=6)
+    # Output figure
+    ndpi=300
+    out_file(out_fn,ndpi)
+
+
+# data plot ========================================================== CHJ =====
+def plot_data(plt_var,plt_var_nm,plt_out_txt):
+# ==================================================================== CHJ =====
+    var_max=np.max(plt_var)
+    var_min=np.min(plt_var)
+    print('var_max=',var_max)
+    print('var_min=',var_min)
+    var_max08=var_max*0.8
+    var_min08=var_min*0.8
+    print('var_max08=',var_max08)
+    print('var_min08=',var_min08)
+
+    cmap_range_opt='fixed'
+    cs_cmap='gist_ncar_r'
+    if cmap_range_opt=='symmetry':
+        n_rnd=0
+        tmp_cmp=max(abs(var_max08),abs(var_min08))
+        cs_min=round(-tmp_cmp,n_rnd)
+        cs_max=round(tmp_cmp,n_rnd)
+        cbar_extend='both'
+    elif cmap_range_opt=='round':
+        n_rnd=0
+        cs_min=round(var_min08,n_rnd)
+        cs_max=round(var_max08,n_rnd)
+        cbar_extend='both'
+    elif cmap_range_opt=='real':
+        cs_min=var_min
+        cs_max=var_max
+        cbar_extend='neither'
+    elif cmap_range_opt=='fixed':
+        cs_min=0.0
+        cs_max=150.0
+        cbar_extend='both'
+    else:
+        sys.exit('ERROR: wrong colormap-range flag !!!')
+
+    print('cs_max=',cs_max)
+    print('cs_min=',cs_min)
+
+    out_title=out_title_base+plt_var_nm+'::'+plt_out_txt
+    out_fn=out_fn_base+plt_var_nm+'_'+plt_out_txt
+
+    fig,ax=plt.subplots(1,1,subplot_kw=dict(projection=ccrs.Robinson(c_lon)))
+    ax.set_title(out_title, fontsize=6)
+    # Call background plot
+    back_plot(ax)
+
+    for it in range(num_tiles):
+        cs=ax.pcolormesh(glon[it,:,:],glat[it,:,:],plt_var[it,:,:],cmap=cs_cmap,rasterized=True,
+            vmin=cs_min,vmax=cs_max,transform=ccrs.PlateCarree())
+
+    divider=make_axes_locatable(ax)
+    ax_cb=divider.new_horizontal(size="3%",pad=0.1,axes_class=plt.Axes)
+    fig.add_axes(ax_cb)
+    cbar=plt.colorbar(cs,cax=ax_cb,extend=cbar_extend)
+    cbar.ax.tick_params(labelsize=6)
+    cbar.set_label(plt_var_nm,fontsize=6)
     # Output figure
     ndpi=300
     out_file(out_fn,ndpi)
