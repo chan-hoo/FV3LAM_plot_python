@@ -26,7 +26,7 @@ from matplotlib.colors import ListedColormap
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 # HPC machine ('hera','orion')
-machine='hera'
+machine='orion'
 
 print(' You are on', machine)
 
@@ -48,13 +48,11 @@ else:
 # Case-dependent input ============================================== CHJ =====
 
 # input data:
-path_dir='/scratch2/NAGAPE/epic/Chan-hoo.Jeon/global-workflow_test/comroot/snow_gsi/gdas.20211220/18/analysis/atmos'
+path_dir='/work/noaa/epic/chjeon/global_workflow_hercules/comroot/snow_gdas/gdas.20211220/18/analysis/atmos'
 fn_input='gdas.t18z.sfcanl.nc'
 
-svars_list=['snod']
-
-# Vertical layer number
-zlyr_num=2
+#svars_list=['snod','tmp2m']
+svars_list=['soill3']
 
 # basic forms of title and file name
 out_title_base='Land-DA::SFCANAL::'
@@ -73,7 +71,7 @@ def main():
     global data_in,glon,glat
      # open the orography file
     fname=os.path.join(path_dir,fn_input)
-    try: data_in=xr.open_mfdataset(fname)
+    try: data_in=xr.open_dataset(fname)
     except: raise Exception('Could NOT find the file',fname)
 
     print(' ===== INPUT DATA ================================')
@@ -91,6 +89,7 @@ def main():
 def plot_svar(svar):
 # ==================================================================== CHJ =====
 
+    print(' ===== svar: '+svar+' ================================')
     # Extract variable
     svar_data=np.ma.masked_invalid(data_in[svar].data)
     print(svar_data.shape)
