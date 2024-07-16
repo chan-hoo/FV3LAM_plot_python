@@ -1,2 +1,2 @@
 module load miniconda3/4.10.3
-source ../PY_ENV/plot_python/bin/activate
+source /work/noaa/epic/chjeon/PY_ENV/plot_python/bin/activate
