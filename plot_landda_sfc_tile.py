@@ -48,7 +48,7 @@ else:
 
 # Case-dependent input ============================================== CHJ =====
 
-opt_analysis='gdas'  # jedi, gdas, gsi
+opt_analysis='gsi'  # jedi, gdas, gsi
 if opt_analysis == 'jedi':
     # SFC_1 data:
     path_sfc1='/scratch2/NAGAPE/epic/Chan-hoo.Jeon/landda_test/ptmp/test/tmp/DATA_SHARE/20000103'
@@ -83,13 +83,13 @@ elif opt_analysis == 'gdas':
 
 elif opt_analysis == 'gsi':
     # SFC_1 data:
-    path_sfc1='/scratch2/NAGAPE/epic/Chan-hoo.Jeon/global-workflow_test/stmp/RUNDIRS/snow_gsi/sfcanl.1388101'
-    fn_sfc1_base='fnbgsi.00'
-    fn_sfc1_ext=''
+    path_sfc1='/scratch2/NAGAPE/epic/Chan-hoo.Jeon/global-workflow_test/stmp/RUNDIRS/snow_gsi/gdasfcst.2021122018/fcst.1233933/INPUT'
+    fn_sfc1_base='sfc_data.tile'
+    fn_sfc1_ext='.nc'
     # SFC_2 data:
-    path_sfc2=path_sfc1
-    fn_sfc2_base='fnbgso.00'
-    fn_sfc2_ext=''
+    path_sfc2='/scratch2/NAGAPE/epic/Chan-hoo.Jeon/global-workflow_test/comroot/snow_gsi/gdas.20211220/18/model_data/atmos/restart'
+    fn_sfc2_base='20211220.210000.sfc_data.tile'
+    fn_sfc2_ext='.nc'
     # variable
     sfc_var_nm='snodl'
     #sfc_var_nm='stc'
@@ -231,8 +231,8 @@ def get_sfc(path_sfc,fn_sfc_base,fn_sfc_ext,sfc_var_nm,sfc_out_txt,ref_opt):
 
         try: sfc=xr.open_dataset(fp_sfc)
         except: raise Exception('Could NOT find the file',fp_sfc)
-        if it == 1:
-            print(sfc)
+#        if it == 1:
+#            print(sfc)
 
         # Extract variable
         sfc_data=np.ma.masked_invalid(sfc[sfc_var_nm].data)
