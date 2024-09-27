@@ -31,7 +31,6 @@ print(' You are on', machine)
 #### Machine-specific input data ===================================== CHJ =====
 # cartopy.config: Natural Earth data for background
 # out_fig_dir: directory where the output files are created
-
 if machine=='hera':
     cartopy.config['data_dir']='/scratch2/NAGAPE/epic/UFS_Land-DA_Dev/inputs/NaturalEarth'
     out_fig_dir="/scratch2/NCEPDEV/fv3-cam/Chan-hoo.Jeon/tools/fv3sar_pre_plot/Fig"
@@ -49,9 +48,9 @@ fn_data_date='2000-01-05_00-00-00'
 fn_data_base='ufs_land_restart.'+fn_data_date+'.tile'
 fn_data_ext='.nc'
 # variable
-var_nm='snwdph'
-# Vertical layer number
-zlyr_num=2
+var_list=['snwdph','smc']
+# soil level number
+soil_lvl_num=1
 # basic forms of title and file name
 out_title_base='Land-DA::restart::'
 out_fn_base='landda_out_restart_'
@@ -69,7 +68,8 @@ def main():
     # get lon, lat
     get_geo()
     # plot restart file
-    plot_data(path_data,fn_data_base,fn_data_ext,var_nm)
+    for var_nm in var_list:
+        plot_data(path_data,fn_data_base,fn_data_ext,var_nm)
        
 
 # geo lon/lat from orography ======================================== CHJ =====
@@ -91,7 +91,6 @@ def get_geo():
             print(data_raw)
         # Extract geo data
         glon_data=np.ma.masked_invalid(data_raw.variables['grid_xt'])
-#        glon_data=(glon_data+180)%360-180
         print('Dimension of glon(grid_xt)=',glon_data.shape)
         print('Tile',itp,',max:',np.max(glon_data))
         print('Tile',itp,',min:',np.min(glon_data))
@@ -128,14 +127,20 @@ def plot_data(path_data,fn_data_base,fn_data_ext,var_nm):
         except: raise Exception('Could NOT find the file',fp_data)
         # Extract valid variable
         var_data=np.ma.masked_invalid(data_raw.variables[var_nm])
-        print('Dimension of data=',var_data.shape)
-        print('Tile',itp,',max:',np.max(var_data))
-        print('Tile',itp,',min:',np.min(var_data))
+        if var_nm == 'stc' or var_nm == 'smc' or var_nm == 'slc':
+            print('Dimension of original data=',var_data.shape)
+            var_data_2d=var_data[:,soil_lvl_num-1,:,:]
+        else:
+            var_data_2d=var_data                
+ 
+        print('Dimension of data=',var_data_2d.shape)
+        print('Tile',itp,',max:',np.max(var_data_2d))
+        print('Tile',itp,',min:',np.min(var_data_2d))
 
         if itp == 1:
-            plt_var=var_data
+            plt_var=var_data_2d
         else:
-            plt_var=np.ma.concatenate((plt_var,var_data),axis=0)
+            plt_var=np.ma.concatenate((plt_var,var_data_2d),axis=0)
         data_raw.close()
 
 #    plt_var=np.vstack(var_data_all)
